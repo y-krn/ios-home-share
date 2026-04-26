@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     const originalBuffer = Buffer.from(await file.arrayBuffer())
     const originalMime = file.type || 'image/png'
 
-    // AI解析
+    // AI解析 + ホーム画面判定
     let extractedTags: ExtractedTags & {
       app_links?: Record<string, unknown>
       widget_links?: Record<string, unknown>
@@ -62,17 +62,27 @@ export async function POST(req: NextRequest) {
         originalBuffer.toString('base64'),
         originalMime,
       )
-      const allApps = [...(extractedTags.apps ?? []), ...(extractedTags.dock_apps ?? [])]
-      const uniqueApps = Array.from(new Set(allApps))
-      if (uniqueApps.length > 0) {
-        extractedTags.app_links = await lookupApps(uniqueApps)
-      }
-      const uniqueWidgets = Array.from(new Set(extractedTags.widgets ?? []))
-      if (uniqueWidgets.length > 0) {
-        extractedTags.widget_links = await lookupApps(uniqueWidgets)
-      }
     } catch (e) {
-      console.warn('AI analysis failed, continuing without tags:', e)
+      console.error('AI analysis failed:', e)
+      return NextResponse.json({ error: 'AI解析に失敗しました。再試行してください。' }, { status: 500 })
+    }
+
+    // ホーム画面以外 → 拒否
+    if (!extractedTags.is_home_screen) {
+      return NextResponse.json(
+        { error: 'iOSホーム画面のスクリーンショットのみ投稿可能です。' },
+        { status: 400 }
+      )
+    }
+
+    const allApps = [...(extractedTags.apps ?? []), ...(extractedTags.dock_apps ?? [])]
+    const uniqueApps = Array.from(new Set(allApps))
+    if (uniqueApps.length > 0) {
+      extractedTags.app_links = await lookupApps(uniqueApps)
+    }
+    const uniqueWidgets = Array.from(new Set(extractedTags.widgets ?? []))
+    if (uniqueWidgets.length > 0) {
+      extractedTags.widget_links = await lookupApps(uniqueWidgets)
     }
 
     // sharp 圧縮

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { X } from 'lucide-react'
+import { X, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getAnonUserId } from '@/lib/anon-id'
@@ -131,6 +131,7 @@ function ListEditor({
         })}
       </div>
       <div ref={containerRef} className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         <Input
           value={input}
           onChange={e => { setInput(e.target.value); setShowDropdown(true) }}
@@ -147,7 +148,7 @@ function ListEditor({
             }
           }}
           placeholder={placeholder}
-          className="h-9 text-sm"
+          className="h-9 text-sm pl-9"
         />
         {showDropdown && input.trim() && (
           <div className="absolute z-[60] left-0 right-0 mt-2 rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 max-h-80 overflow-y-auto overscroll-contain">
@@ -250,9 +251,9 @@ export function EditTagsForm({
 
   return (
     <div className="space-y-6">
-      <ListEditor label="アプリ" items={apps} setItems={setApps} placeholder="例: Instagram" links={appLinks} setLinks={setAppLinks} />
-      <ListEditor label="Dock" items={dockApps} setItems={setDockApps} placeholder="例: Safari" links={appLinks} setLinks={setAppLinks} />
-      <ListEditor label="ウィジェット" items={widgets} setItems={setWidgets} placeholder="例: Calendar" links={widgetLinks} setLinks={setWidgetLinks} />
+      <ListEditor label="アプリ" items={apps} setItems={setApps} placeholder="アプリ名で検索して追加" links={appLinks} setLinks={setAppLinks} />
+      <ListEditor label="Dock" items={dockApps} setItems={setDockApps} placeholder="Dockアプリを検索して追加" links={appLinks} setLinks={setAppLinks} />
+      <ListEditor label="ウィジェット" items={widgets} setItems={setWidgets} placeholder="ウィジェットの提供アプリを検索" links={widgetLinks} setLinks={setWidgetLinks} />
 
       <div className="space-y-2">
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">テーマ</h2>

@@ -39,16 +39,16 @@ export function LoginForm() {
 
   if (sent) {
     return (
-      <div className="rounded-2xl bg-green-50 border border-green-200 p-4 space-y-2">
-        <div className="flex items-center gap-2 text-green-700">
-          <CheckCircle2 size={18} />
-          <span className="font-semibold text-sm">メール送信完了</span>
+      <div className="glass rounded-2xl p-5 space-y-3">
+        <div className="flex items-center gap-2 text-emerald-500">
+          <CheckCircle2 size={20} />
+          <span className="font-semibold">メール送信完了</span>
         </div>
-        <p className="text-xs text-green-900 leading-relaxed">
-          {email} 宛にログインリンクを送信しました。受信箱を確認してリンクをタップしてください。
+        <p className="text-sm leading-relaxed">
+          <span className="font-medium">{email}</span> 宛にログインリンクを送信。受信箱を確認してリンクをタップ。
         </p>
-        <p className="text-[10px] text-green-700">
-          メールが届かない場合は迷惑メールフォルダを確認。
+        <p className="text-xs text-muted">
+          届かない場合は迷惑メールフォルダを確認。
         </p>
       </div>
     )
@@ -57,22 +57,26 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="relative">
-        <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-        <Input
+        <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" />
+        <input
           type="email"
           required
           autoComplete="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
           placeholder="メールアドレス"
-          className="pl-9 h-11"
+          className="w-full pl-11 pr-4 h-12 rounded-full glass text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-indigo-400/50 transition-shadow"
         />
       </div>
-      {error && <p className="text-red-500 text-xs">{error}</p>}
-      <Button type="submit" disabled={!email.trim() || sending} className="w-full gap-2 h-11">
+      {error && <p className="text-rose-500 text-sm font-medium">{error}</p>}
+      <button
+        type="submit"
+        disabled={!email.trim() || sending}
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+      >
         <Send size={14} />
         {sending ? '送信中...' : 'ログインリンクを送る'}
-      </Button>
+      </button>
     </form>
   )
 }

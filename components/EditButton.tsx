@@ -20,10 +20,10 @@ export function EditButton({ postId, ownerAnonId }: Props) {
   return (
     <Link
       href={`/posts/${postId}/edit`}
-      className="flex items-center gap-1 text-sm text-gray-400 hover:text-blue-500 transition-colors"
+      className="flex items-center justify-center w-8 h-8 rounded-full glass-soft text-muted hover:text-indigo-500 hover:scale-105 active:scale-90 transition-all"
+      title="編集"
     >
-      <Pencil size={14} />
-      <span className="text-xs">編集</span>
+      <Pencil size={13} />
     </Link>
   )
 }

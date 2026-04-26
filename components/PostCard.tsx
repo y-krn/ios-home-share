@@ -24,7 +24,7 @@ export function PostCard({ post, priority, showEdit }: Props) {
   const theme = tags.theme
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
+    <div className="group glass rounded-3xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
       <Link href={`/posts/${post.id}`} className="block relative aspect-[9/19.5]">
         <Image
           src={post.image_url}
@@ -35,15 +35,15 @@ export function PostCard({ post, priority, showEdit }: Props) {
           priority={priority}
         />
         {theme && (
-          <span className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full">
+          <span className="absolute top-2 right-2 glass-soft text-[10px] font-medium px-2 py-0.5 rounded-full text-white/90">
             {theme}
           </span>
         )}
       </Link>
-      <div className="p-2 flex items-center justify-between">
+      <div className="p-2.5 flex items-center justify-between">
         <LikeButton postId={post.id} initialCount={post.like_count} />
         {showEdit && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <EditButton postId={post.id} ownerAnonId={post.anon_user_id} />
             <DeleteButton postId={post.id} ownerAnonId={post.anon_user_id} />
           </div>

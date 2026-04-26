@@ -1,47 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #171717;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #171717;
-  --radius: 0.5rem;
+  --bg-from: #fef3f9;
+  --bg-via: #eef2ff;
+  --bg-to: #f0fdfa;
+  --surface: 255 255 255;
+  --surface-alpha: 0.7;
+  --border: 255 255 255;
+  --border-alpha: 0.4;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #6366f1;
+  --accent-strong: #4f46e5;
+  --danger: #ef4444;
+  --shadow-card: 0 8px 32px rgba(15, 23, 42, 0.08);
+}
+
+.dark {
+  --bg-from: #1e1b4b;
+  --bg-via: #0f172a;
+  --bg-to: #134e4a;
+  --surface: 30 41 59;
+  --surface-alpha: 0.55;
+  --border: 255 255 255;
+  --border-alpha: 0.08;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #818cf8;
+  --accent-strong: #a5b4fc;
+  --danger: #f87171;
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-text: var(--text);
   --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-accent-strong: var(--accent-strong);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+}
+
+html, body {
+  min-height: 100vh;
+  color: var(--text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent),
+    linear-gradient(135deg, var(--bg-from) 0%, var(--bg-via) 50%, var(--bg-to) 100%);
+  background-attachment: fixed;
+  font-feature-settings: "ss01", "cv11";
+}
+
+@utility glass {
+  background-color: rgb(var(--surface) / var(--surface-alpha));
+  backdrop-filter: saturate(140%) blur(24px);
+  -webkit-backdrop-filter: saturate(140%) blur(24px);
+  border: 1px solid rgb(var(--border) / var(--border-alpha));
+  box-shadow: var(--shadow-card);
+}
+
+@utility glass-soft {
+  background-color: rgb(var(--surface) / 0.5);
+  backdrop-filter: saturate(140%) blur(20px);
+  -webkit-backdrop-filter: saturate(140%) blur(20px);
+  border: 1px solid rgb(var(--border) / 0.3);
 }
 
 @utility scrollbar-hide {
@@ -49,4 +74,8 @@ body {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@utility text-muted {
+  color: var(--muted);
 }

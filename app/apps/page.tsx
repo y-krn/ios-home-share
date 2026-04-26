@@ -18,39 +18,42 @@ export default async function AppsPage() {
   const apps: PopularApp[] = data ?? []
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold">人気のアプリ</h1>
-      <p className="text-xs text-gray-500">投稿で多く使われているアプリ順</p>
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">人気のアプリ</h1>
+        <p className="text-sm text-muted">投稿で多く使われているアプリ順</p>
+      </div>
 
       {apps.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">まだデータがありません</div>
+        <div className="text-center py-20 text-muted">まだデータがありません</div>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {apps.map((app, i) => {
             const slug = app.info ? (extractTrackId(app.info.url) ?? app.info.trackName) : app.name
             const display = app.info?.trackName ?? app.name
+            const rankColor = i < 3 ? 'text-amber-500 font-bold' : 'text-muted'
             return (
               <li key={app.name}>
                 <Link
                   href={`/apps/${encodeURIComponent(slug)}`}
-                  className="flex items-center gap-3 p-2 rounded-xl bg-white hover:bg-gray-50 border border-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-2.5 rounded-2xl glass hover:scale-[1.02] active:scale-95 transition-transform"
                 >
-                  <span className="text-xs font-semibold text-gray-400 w-6 text-center">{i + 1}</span>
+                  <span className={`text-sm w-6 text-center ${rankColor}`}>{i + 1}</span>
                   {app.info?.icon ? (
                     <Image
                       src={app.info.icon}
                       alt={display}
-                      width={44}
-                      height={44}
-                      className="rounded-xl flex-shrink-0 shadow-sm ring-1 ring-black/5"
+                      width={48}
+                      height={48}
+                      className="rounded-xl flex-shrink-0 shadow-md ring-1 ring-black/5"
                       unoptimized
                     />
                   ) : (
-                    <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-xs text-gray-400">?</div>
+                    <div className="w-12 h-12 rounded-xl bg-white/30 flex items-center justify-center text-xs text-muted">?</div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-900 truncate">{display}</div>
-                    <div className="text-xs text-gray-400">{app.use_count}件の投稿</div>
+                    <div className="text-sm font-semibold truncate">{display}</div>
+                    <div className="text-xs text-muted">{app.use_count}件の投稿</div>
                   </div>
                 </Link>
               </li>

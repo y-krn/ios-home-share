@@ -40,11 +40,11 @@ export function DeleteButton({ postId, ownerAnonId, redirectAfter }: Props) {
     <button
       onClick={onDelete}
       disabled={deleting}
-      className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+      className="flex items-center justify-center w-8 h-8 rounded-full glass-soft text-muted hover:text-red-500 hover:scale-105 active:scale-90 transition-all disabled:opacity-50"
       aria-label="delete"
+      title="削除"
     >
-      <Trash2 size={16} />
-      <span className="text-xs">{deleting ? '削除中...' : '削除'}</span>
+      <Trash2 size={14} />
     </button>
   )
 }

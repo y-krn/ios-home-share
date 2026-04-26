@@ -45,30 +45,36 @@ export function UploadForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-5">
       <div
         onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 transition-colors"
+        className="glass rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:scale-[1.01] transition-transform"
         style={{ minHeight: 320 }}
       >
         {preview ? (
           <div className="relative w-full" style={{ aspectRatio: '9/19.5' }}>
-            <Image src={preview} alt="preview" fill sizes="(max-width: 640px) 100vw, 384px" className="object-contain rounded-2xl" />
+            <Image src={preview} alt="preview" fill sizes="(max-width: 640px) 100vw, 384px" className="object-contain rounded-3xl" />
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 py-16 text-gray-400">
-            <ImageIcon size={48} strokeWidth={1} />
-            <p className="text-sm">スクリーンショットを選択</p>
-            <p className="text-xs">PNG / JPG・10MB以下</p>
+          <div className="flex flex-col items-center gap-3 py-20 text-muted">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-fuchsia-400 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <ImageIcon size={28} strokeWidth={1.5} className="text-white" />
+            </div>
+            <p className="text-sm font-medium">スクリーンショットを選択</p>
+            <p className="text-xs text-muted">PNG / JPG・10MB以下</p>
           </div>
         )}
       </div>
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <Button type="submit" disabled={!file || uploading} className="w-full gap-2">
+      {error && <p className="text-rose-500 text-sm font-medium">{error}</p>}
+      <button
+        type="submit"
+        disabled={!file || uploading}
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+      >
         <Upload size={16} />
         {uploading ? 'AI解析・圧縮中...' : '投稿する'}
-      </Button>
+      </button>
     </form>
   )
 }

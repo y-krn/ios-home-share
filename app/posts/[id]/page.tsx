@@ -26,18 +26,18 @@ export default async function PostPage({ params }: Props) {
   const widgetLinks: Record<string, { url: string; icon: string; trackName: string }> = tags.widget_links ?? {}
 
   return (
-    <div className="max-w-sm mx-auto space-y-6">
+    <div className="max-w-sm mx-auto space-y-5">
       <div className="flex items-center gap-3">
-        <Link href="/" className="text-gray-400 hover:text-gray-600">
-          <ArrowLeft size={20} />
+        <Link href="/" className="flex items-center justify-center w-9 h-9 rounded-full glass-soft text-muted hover:text-accent transition-colors">
+          <ArrowLeft size={18} />
         </Link>
-        <h1 className="text-lg font-semibold">ホーム画面</h1>
+        <h1 className="text-2xl font-bold tracking-tight">ホーム画面</h1>
       </div>
 
-      <div className="relative aspect-[9/19.5] rounded-2xl overflow-hidden shadow-lg">
+      <div className="relative aspect-[9/19.5] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/10">
         <Image src={post.image_url} alt="iOS home screen" fill sizes="(max-width: 640px) 100vw, 384px" className="object-cover" priority />
         {theme && (
-          <span className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+          <span className="absolute top-3 right-3 glass-soft text-white/95 text-xs font-medium px-3 py-1 rounded-full">
             {theme}
           </span>
         )}
@@ -58,7 +58,7 @@ export default async function PostPage({ params }: Props) {
 
       {apps.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">アプリ</h2>
+          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">アプリ</h2>
           <div className="flex flex-wrap gap-1.5">
             {apps.map(app => <AppLink key={app} name={app} info={appLinks[app]} />)}
           </div>
@@ -67,7 +67,7 @@ export default async function PostPage({ params }: Props) {
 
       {dockApps.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Dock</h2>
+          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">Dock</h2>
           <div className="flex flex-wrap gap-1.5">
             {dockApps.map(app => <AppLink key={app} name={app} info={appLinks[app]} />)}
           </div>
@@ -76,7 +76,7 @@ export default async function PostPage({ params }: Props) {
 
       {widgets.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">ウィジェット</h2>
+          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">ウィジェット</h2>
           <div className="flex flex-wrap gap-1.5">
             {widgets.map(w => <TagBadge key={w} tag={w} type="widget" label={widgetLinks[w]?.trackName} />)}
           </div>

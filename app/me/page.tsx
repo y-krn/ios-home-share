@@ -41,25 +41,25 @@ export default async function MyPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">マイページ</h1>
+      <h1 className="text-2xl font-bold tracking-tight">マイページ</h1>
 
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="glass-soft rounded-full p-1 inline-flex">
         <Link
           href="/me"
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-5 py-1.5 text-sm font-medium rounded-full transition-all ${
             activeTab === 'mine'
-              ? 'border-black text-black'
-              : 'border-transparent text-gray-400 hover:text-gray-600'
+              ? 'bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-md'
+              : 'text-muted hover:text-foreground'
           }`}
         >
           自分の投稿
         </Link>
         <Link
           href="/me?tab=liked"
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-5 py-1.5 text-sm font-medium rounded-full transition-all ${
             activeTab === 'liked'
-              ? 'border-black text-black'
-              : 'border-transparent text-gray-400 hover:text-gray-600'
+              ? 'bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-md'
+              : 'text-muted hover:text-foreground'
           }`}
         >
           いいね
@@ -70,11 +70,11 @@ export default async function MyPage({ searchParams }: Props) {
         <PostGrid initialPosts={posts as never} showEdit={activeTab === 'mine'} />
       ) : (
         <div className="text-center py-20 space-y-4">
-          <p className="text-gray-500">
+          <p className="text-muted">
             {activeTab === 'mine' ? 'まだ投稿がありません' : 'まだいいねがありません'}
           </p>
           {activeTab === 'mine' && (
-            <Link href="/upload" className="inline-block bg-black text-white px-4 py-2 rounded-full text-sm">
+            <Link href="/upload" className="inline-block px-5 py-2.5 rounded-full text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/25">
               ホーム画面を投稿する
             </Link>
           )}

@@ -15,7 +15,7 @@ export function SignOutButton() {
   return (
     <button
       onClick={onClick}
-      className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors"
+      className="flex items-center justify-center w-9 h-9 rounded-full glass-soft hover:scale-105 active:scale-95 hover:text-red-500 text-muted transition-all"
       aria-label="ログアウト"
       title="ログアウト"
     >

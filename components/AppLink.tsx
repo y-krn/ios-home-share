@@ -11,23 +11,24 @@ function extractTrackId(url: string): string | null {
 }
 
 export function AppLink({ name, info }: Props) {
-  // app_links に URL あれば trackId 優先 (正確マッチ)、無ければ名前検索
   const slug = info ? (extractTrackId(info.url) ?? info.trackName) : name
 
   return (
     <Link
       href={`/apps/${encodeURIComponent(slug)}`}
-      className="inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-700 transition-colors"
+      className="inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full glass-soft text-xs font-medium hover:scale-105 active:scale-95 transition-transform"
     >
-      {info && (
+      {info ? (
         <Image
           src={info.icon}
           alt={info.trackName}
-          width={20}
-          height={20}
-          className="rounded-md"
+          width={22}
+          height={22}
+          className="rounded-md shadow-sm"
           unoptimized
         />
+      ) : (
+        <span className="w-[22px] h-[22px] rounded-md bg-white/30 flex items-center justify-center text-[8px] text-muted">?</span>
       )}
       <span>{info?.trackName ?? name}</span>
     </Link>

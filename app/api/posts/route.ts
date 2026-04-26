@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
+import ExifParser from 'exif-parser'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { analyzeScreenshotFromBase64, type ExtractedTags } from '@/lib/gemini'
@@ -51,6 +52,35 @@ export async function POST(req: NextRequest) {
     // 原本Buffer取得
     const originalBuffer = Buffer.from(await file.arrayBuffer())
     const originalMime = file.type || 'image/png'
+
+    // 事前判定: 写真 (EXIFカメラ情報あり) or 横長画像 → Gemini呼ばずreject
+    const meta = await sharp(originalBuffer).metadata()
+    const aspect = (meta.width ?? 1) / (meta.height ?? 1)
+
+    let hasCamera = false
+    if (originalMime === 'image/jpeg' || originalMime === 'image/jpg') {
+      try {
+        const parser = ExifParser.create(originalBuffer)
+        const exif = parser.parse()
+        const tags = exif.tags as { Make?: string; Model?: string } | undefined
+        hasCamera = !!(tags?.Make || tags?.Model)
+      } catch {
+        // EXIF parse失敗 → 無視
+      }
+    }
+
+    if (hasCamera) {
+      return NextResponse.json(
+        { error: 'カメラで撮影した写真は投稿できません。スクリーンショットを使用してください。' },
+        { status: 400 }
+      )
+    }
+    if (aspect >= 0.7) {
+      return NextResponse.json(
+        { error: 'iOSホーム画面の縦長スクリーンショットを使用してください。' },
+        { status: 400 }
+      )
+    }
 
     // AI解析 + ホーム画面判定
     let extractedTags: ExtractedTags & {

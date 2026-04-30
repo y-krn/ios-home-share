@@ -30,7 +30,7 @@ export default async function PostPage({ params }: Props) {
       <BackButton fallback="/" variant="text" />
 
       <div className="relative aspect-[9/19.5] rounded-[2.5rem] overflow-hidden bg-black shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] ring-[3px] ring-black ring-offset-1 ring-offset-black/40">
-        <Image src={post.image_url} alt="iOS home screen" fill sizes="(max-width: 640px) 100vw, 384px" className="object-cover" priority />
+        <Image src={post.image_url} alt="iOS home screen" fill sizes="(max-width: 640px) 100vw, 384px" className="object-cover" loading="eager" fetchPriority="high" />
         {/* Dynamic Island */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[28%] h-[3.2%] min-h-[18px] bg-black rounded-full pointer-events-none z-10" />
         {theme && (

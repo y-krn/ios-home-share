@@ -32,7 +32,8 @@ export function PostCard({ post, priority, showEdit }: Props) {
             fill
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            priority={priority}
+            loading={priority ? 'eager' : undefined}
+            fetchPriority={priority ? 'high' : undefined}
           />
           {/* Dynamic Island silhouette */}
           <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[28%] h-[3.2%] min-h-[18px] bg-black rounded-full pointer-events-none z-10" />

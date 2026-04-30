@@ -19,24 +19,27 @@ export default function Icon() {
       >
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: 'repeat(3, 1fr)',
+            display: 'flex',
+            flexDirection: 'column',
             gap: 2,
             width: 18,
             height: 18,
           }}
         >
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: 4,
-                height: 4,
-                borderRadius: 1,
-                background: 'white',
-              }}
-            />
+          {Array.from({ length: 3 }).map((_, row) => (
+            <div key={row} style={{ display: 'flex', gap: 2 }}>
+              {Array.from({ length: 3 }).map((_, col) => (
+                <div
+                  key={col}
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 1,
+                    background: 'white',
+                  }}
+                />
+              ))}
+            </div>
           ))}
         </div>
       </div>

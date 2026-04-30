@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { AuthHeader } from '@/components/AuthHeader'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { AppIconBackdrop } from '@/components/AppIconBackdrop'
+import { Footer } from '@/components/Footer'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="max-w-5xl mx-auto px-4 py-6">
             {children}
           </main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

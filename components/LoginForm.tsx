@@ -75,6 +75,9 @@ export function LoginForm() {
         <Send size={14} />
         {sending ? '送信中...' : 'ログインリンクを送る'}
       </button>
+      <p className="text-[11px] text-muted text-center leading-relaxed">
+        ログインすることで <a href="/terms" className="underline hover:text-accent">利用規約</a> と <a href="/privacy" className="underline hover:text-accent">プライバシーポリシー</a> に同意したものとみなされます。
+      </p>
     </form>
   )
 }

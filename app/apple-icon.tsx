@@ -18,14 +18,27 @@ export default function AppleIcon() {
       >
         <div
           style={{
-            display: 'flex',
-            width: 80,
-            height: 130,
-            borderRadius: 22,
-            background: 'rgba(255,255,255,0.95)',
-            border: '6px solid white',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(3, 1fr)',
+            gap: 12,
+            width: 100,
+            height: 100,
           }}
-        />
+        >
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 6,
+                background: 'white',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              }}
+            />
+          ))}
+        </div>
       </div>
     ),
     { ...size },

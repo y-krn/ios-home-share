@@ -19,14 +19,26 @@ export default function Icon() {
       >
         <div
           style={{
-            display: 'flex',
-            width: 14,
-            height: 22,
-            borderRadius: 4,
-            background: 'rgba(255,255,255,0.95)',
-            border: '2px solid white',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(3, 1fr)',
+            gap: 2,
+            width: 18,
+            height: 18,
           }}
-        />
+        >
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: 1,
+                background: 'white',
+              }}
+            />
+          ))}
+        </div>
       </div>
     ),
     { ...size },

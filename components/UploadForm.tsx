@@ -4,11 +4,13 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Upload, ImageIcon } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export function UploadForm() {
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [stage, setStage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -22,36 +24,6 @@ export function UploadForm() {
     setError(null)
   }
 
-  async function compressImage(f: File, maxDim = 1500, quality = 0.85): Promise<Blob> {
-    const url = URL.createObjectURL(f)
-    try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const i = new window.Image()
-        i.onload = () => resolve(i)
-        i.onerror = () => reject(new Error('画像を読み込めませんでした'))
-        i.src = url
-      })
-      const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
-      const w = Math.round(img.width * scale)
-      const h = Math.round(img.height * scale)
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('canvas context取得失敗')
-      ctx.drawImage(img, 0, 0, w, h)
-      return await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          b => (b ? resolve(b) : reject(new Error('圧縮失敗'))),
-          'image/jpeg',
-          quality,
-        )
-      })
-    } finally {
-      URL.revokeObjectURL(url)
-    }
-  }
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!file) return
@@ -59,15 +31,43 @@ export function UploadForm() {
     setError(null)
 
     try {
-      const compressed = await compressImage(file)
-      const formData = new FormData()
-      formData.append('file', compressed, 'screenshot.jpg')
+      // 1. signed upload URL 取得
+      setStage('準備中...')
+      const urlRes = await fetch('/api/posts/upload-url', { method: 'POST' })
+      if (!urlRes.ok) {
+        const d = await urlRes.json().catch(() => ({}))
+        setError(d.error ?? 'アップロードURL取得失敗')
+        setUploading(false)
+        setStage('')
+        return
+      }
+      const { token, path } = await urlRes.json() as { token: string; path: string }
 
-      const res = await fetch('/api/posts', { method: 'POST', body: formData })
+      // 2. Supabase Storage 直アップロード (Vercel経由しない → サイズ制限なし)
+      setStage('アップロード中...')
+      const supabase = createClient()
+      const { error: upErr } = await supabase.storage
+        .from('screenshots')
+        .uploadToSignedUrl(path, token, file, { contentType: file.type })
+      if (upErr) {
+        setError(`アップロード失敗: ${upErr.message}`)
+        setUploading(false)
+        setStage('')
+        return
+      }
+
+      // 3. サーバ側でAI解析 + 圧縮
+      setStage('AI解析中...')
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path }),
+      })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
-        setError(d.error ?? `アップロード失敗 (${res.status})`)
+        setError(d.error ?? `投稿失敗 (${res.status})`)
         setUploading(false)
+        setStage('')
         return
       }
       router.push('/')
@@ -75,6 +75,7 @@ export function UploadForm() {
     } catch {
       setError('ネットワークエラー。再試行してください。')
       setUploading(false)
+      setStage('')
     }
   }
 
@@ -107,7 +108,7 @@ export function UploadForm() {
         className="w-full flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       >
         <Upload size={16} />
-        {uploading ? 'AI解析・圧縮中...' : '投稿する'}
+        {uploading ? (stage || '処理中...') : '投稿する'}
       </button>
     </form>
   )

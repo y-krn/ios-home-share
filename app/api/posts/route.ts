@@ -46,15 +46,22 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
     if (user.is_anonymous) return NextResponse.json({ error: 'login required' }, { status: 403 })
 
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-    if (!file) return NextResponse.json({ error: 'file required' }, { status: 400 })
+    const body = await req.json().catch(() => null) as { path?: string } | null
+    const tempPath = body?.path
+    if (!tempPath || !tempPath.startsWith('temp/')) {
+      return NextResponse.json({ error: 'invalid path' }, { status: 400 })
+    }
 
     const admin = createAdminClient()
 
-    // 原本Buffer取得
-    const originalBuffer = Buffer.from(await file.arrayBuffer())
-    const originalMime = file.type || 'image/png'
+    // Storage から原本ダウンロード
+    const { data: blob, error: dlError } = await admin.storage.from(BUCKET).download(tempPath)
+    if (dlError || !blob) {
+      console.error('download failed:', dlError)
+      return NextResponse.json({ error: 'アップロード済みファイルが見つかりません' }, { status: 400 })
+    }
+    const originalBuffer = Buffer.from(await blob.arrayBuffer())
+    const originalMime = blob.type || 'image/png'
 
     // 事前判定: 写真 (EXIFカメラ情報あり) or 横長画像 → Gemini呼ばずreject
     const meta = await sharp(originalBuffer).metadata()
@@ -85,6 +92,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // sharp 圧縮 (Gemini入力 + 最終保存 兼用)
+    const compressedBuffer = await sharp(originalBuffer)
+      .rotate()
+      .resize({ width: 1080, height: 1080, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer()
+
     // AI解析 + ホーム画面判定
     let extractedTags: ExtractedTags & {
       app_links?: Record<string, unknown>
@@ -92,8 +106,8 @@ export async function POST(req: NextRequest) {
     } = {} as ExtractedTags
     try {
       extractedTags = await analyzeScreenshotFromBase64(
-        originalBuffer.toString('base64'),
-        originalMime,
+        compressedBuffer.toString('base64'),
+        'image/webp',
       )
     } catch (e) {
       console.error('AI analysis failed:', e)
@@ -108,22 +122,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // iTunes lookup 並列化
     const allApps = [...(extractedTags.apps ?? []), ...(extractedTags.dock_apps ?? [])]
     const uniqueApps = Array.from(new Set(allApps))
-    if (uniqueApps.length > 0) {
-      extractedTags.app_links = await lookupApps(uniqueApps)
-    }
     const uniqueWidgets = Array.from(new Set(extractedTags.widgets ?? []))
-    if (uniqueWidgets.length > 0) {
-      extractedTags.widget_links = await lookupApps(uniqueWidgets)
-    }
-
-    // sharp 圧縮
-    const compressedBuffer = await sharp(originalBuffer)
-      .rotate()
-      .resize({ width: 1080, height: 1080, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer()
+    const [appLinks, widgetLinks] = await Promise.all([
+      uniqueApps.length > 0 ? lookupApps(uniqueApps) : Promise.resolve(undefined),
+      uniqueWidgets.length > 0 ? lookupApps(uniqueWidgets) : Promise.resolve(undefined),
+    ])
+    if (appLinks) extractedTags.app_links = appLinks
+    if (widgetLinks) extractedTags.widget_links = widgetLinks
 
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
     const { error: uploadError } = await admin.storage
@@ -147,6 +155,9 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) throw error
+
+    // temp 削除 (失敗しても本処理は成功扱い)
+    await admin.storage.from(BUCKET).remove([tempPath]).catch(() => {})
 
     return NextResponse.json(data, { status: 201 })
   } catch (e) {

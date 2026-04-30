@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { X, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { X, Search, Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { getCurrentUserId } from '@/lib/auth'
 
@@ -274,9 +273,15 @@ export function EditTagsForm({
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <Button onClick={onSave} disabled={saving} className="w-full">
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving}
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+      >
+        <Save size={16} />
         {saving ? '保存中...' : '保存'}
-      </Button>
+      </button>
     </div>
   )
 }

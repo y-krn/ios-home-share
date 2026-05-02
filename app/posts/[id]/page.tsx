@@ -1,16 +1,20 @@
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { CalendarDays, LayoutGrid, Palette, PanelBottom, Smartphone, WandSparkles } from 'lucide-react'
+import { CalendarDays, CheckCircle2, LayoutGrid, Palette, PanelBottom, Smartphone, WandSparkles } from 'lucide-react'
 import { BackButton } from '@/components/BackButton'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { LikeButton } from '@/components/LikeButton'
 import { TagBadge } from '@/components/TagBadge'
 import { AppLink } from '@/components/AppLink'
 
-type Props = { params: Promise<{ id: string }> }
+type Props = {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ posted?: string }>
+}
 
-export default async function PostPage({ params }: Props) {
+export default async function PostPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { posted } = await searchParams
   const supabase = createAdminClient()
 
   const { data: post } = await supabase.from('posts').select('*').eq('id', id).single()
@@ -34,6 +38,18 @@ export default async function PostPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <BackButton fallback="/" variant="text" />
+
+      {posted === '1' && (
+        <div className="gallery-caption flex items-start gap-3 rounded-3xl p-4 text-accent">
+          <CheckCircle2 size={20} className="mt-0.5 flex-shrink-0" />
+          <div>
+            <div className="text-sm font-black">投稿が完了しました</div>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              AIが読み取ったアプリやウィジェットは、このページから確認できます。
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-[minmax(270px,0.78fr)_minmax(0,1fr)] md:items-start">
         <section className="gallery-shelf order-2 rounded-[2.25rem] p-4 sm:p-5 md:order-none md:sticky md:top-20">

@@ -87,7 +87,7 @@ export function UploadForm() {
         return
       }
       const post = await res.json().catch(() => null) as CreatedPost | null
-      router.push(post?.id ? `/posts/${post.id}` : '/')
+      router.push(post?.id ? `/posts/${post.id}?posted=1` : '/')
       router.refresh()
     } catch {
       setError('ネットワークエラー。再試行してください。')

@@ -13,6 +13,7 @@ const steps = [
 ] as const
 
 type StepId = typeof steps[number]['id']
+type CreatedPost = { id?: string }
 
 export function UploadForm() {
   const [preview, setPreview] = useState<string | null>(null)
@@ -85,7 +86,8 @@ export function UploadForm() {
         setActiveStep(null)
         return
       }
-      router.push('/')
+      const post = await res.json().catch(() => null) as CreatedPost | null
+      router.push(post?.id ? `/posts/${post.id}` : '/')
       router.refresh()
     } catch {
       setError('ネットワークエラー。再試行してください。')

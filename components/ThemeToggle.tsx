@@ -13,11 +13,11 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(next)}
-      className="flex items-center justify-center w-9 h-9 rounded-full glass-soft hover:scale-105 active:scale-95 transition-transform"
+      className="gallery-caption flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all hover:-translate-y-0.5 hover:text-accent active:scale-90"
       title={`テーマ: ${label}`}
       aria-label={`テーマ切替 (現在: ${label})`}
     >
-      <Icon size={16} className="text-muted" />
+      <Icon size={16} />
     </button>
   )
 }

@@ -14,21 +14,21 @@ export async function AuthHeader() {
       <Link
         href="/apps"
         prefetch={false}
-        className="flex items-center justify-center w-9 h-9 rounded-full glass-soft hover:scale-105 active:scale-95 transition-transform"
+        className="gallery-caption flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all hover:-translate-y-0.5 hover:text-accent active:scale-90"
         aria-label="人気のアプリ"
         title="人気のアプリ"
       >
-        <Sparkles size={16} className="text-muted" />
+        <Sparkles size={16} />
       </Link>
       <ThemeToggle />
       {isAuthed && (
         <Link
           href="/me"
           prefetch={false}
-          className="flex items-center justify-center w-9 h-9 rounded-full glass-soft hover:scale-105 active:scale-95 transition-transform"
+          className="gallery-caption flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all hover:-translate-y-0.5 hover:text-accent active:scale-90"
           aria-label="マイページ"
         >
-          <User size={16} className="text-muted" />
+          <User size={16} />
         </Link>
       )}
       <Link

@@ -72,7 +72,7 @@ export function LoginForm({ nextOverride }: Props = {}) {
       <button
         type="submit"
         disabled={!email.trim() || sending}
-        className="w-full flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-accent shadow-lg shadow-emerald-950/10 hover:bg-accent-strong hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       >
         <Send size={14} />
         {sending ? '送信中...' : 'ログインリンクを送る'}

@@ -50,7 +50,7 @@ export default async function MyPage({ searchParams }: Props) {
         <div className="space-y-2">
           <h1 className="text-3xl sm:text-4xl font-black leading-tight">マイページ</h1>
           <p className="max-w-xl text-sm text-muted leading-relaxed">
-            自分の投稿と、あとで見返したいホーム画面をまとめて確認できます。
+            自分の投稿と、あとで見返したいiPhone画面をまとめて確認できます。
           </p>
         </div>
       </div>
@@ -92,13 +92,13 @@ export default async function MyPage({ searchParams }: Props) {
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
             {activeTab === 'mine'
-              ? 'お気に入りのホーム画面を投稿すると、ここに自分だけのギャラリーが育っていきます。'
+              ? 'お気に入りのホーム画面やロック画面を投稿すると、ここに自分だけのギャラリーが育っていきます。'
               : '気になるセットアップにハートを付けると、ここからすぐ見返せます。'}
           </p>
           {activeTab === 'mine' && (
             <Link href="/upload" className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-accent shadow-lg shadow-emerald-950/10 hover:bg-accent-strong hover:scale-[1.01] active:scale-95 transition-all">
               <ImagePlus size={16} />
-              ホーム画面を投稿する
+              iPhone画面を投稿する
             </Link>
           )}
         </div>

@@ -16,9 +16,9 @@ export default async function UploadPage() {
             <ScanLine size={13} />
             Upload Scanner
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black leading-tight">ホーム画面を投稿</h1>
+          <h1 className="text-3xl sm:text-4xl font-black leading-tight">iPhone画面を投稿</h1>
           <p className="max-w-xl text-sm text-muted leading-relaxed">
-            iOSホーム画面のスクリーンショットを選ぶと、AIがアプリ名・ウィジェット・テーマを解析してギャラリーに追加します。
+            iOSホーム画面・ロック画面のスクリーンショットを選ぶと、AIがアプリ・ウィジェット・テーマを解析してギャラリーに追加します。
           </p>
         </div>
       </div>
@@ -37,7 +37,7 @@ export default async function UploadPage() {
           <div className="flex items-start gap-3">
             <Folder size={17} className="text-accent flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
-              <span className="font-semibold">フォルダ内アプリは解析対象外。</span>
+              <span className="font-semibold">ホーム画面のフォルダ内アプリは解析対象外。</span>
               <span className="text-muted">タグ付けしたいアプリはフォルダの外に出してから撮影。</span>
             </p>
           </div>

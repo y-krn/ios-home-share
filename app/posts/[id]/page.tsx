@@ -26,6 +26,8 @@ export default async function PostPage({ params, searchParams }: Props) {
   const dockApps: string[] = tags.dock_apps ?? []
   const colors: string[] = tags.wallpaper_colors ?? []
   const theme: string = tags.theme ?? ''
+  const screenType = tags.screen_type === 'lock' || tags.is_lock_screen ? 'lock' : 'home'
+  const isLockScreen = screenType === 'lock'
   const appLinks: Record<string, { url: string; icon: string; trackName: string }> = tags.app_links ?? {}
   const widgetLinks: Record<string, { url: string; icon: string; trackName: string }> = tags.widget_links ?? {}
   const createdAt = new Intl.DateTimeFormat('ja-JP', {
@@ -58,7 +60,7 @@ export default async function PostPage({ params, searchParams }: Props) {
               <div className="relative h-full overflow-hidden rounded-[2.32rem] bg-black">
                 <Image
                   src={post.image_url}
-                  alt="iOS home screen"
+                  alt={isLockScreen ? 'iOS lock screen' : 'iOS home screen'}
                   fill
                   sizes="(max-width: 1024px) 100vw, 390px"
                   className="object-cover"
@@ -83,11 +85,11 @@ export default async function PostPage({ params, searchParams }: Props) {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full glass-soft px-3 py-1 text-xs font-bold tracking-[0.16em] text-accent uppercase">
               <Smartphone size={13} />
-              Setup Profile
+              {isLockScreen ? 'Lock Screen Profile' : 'Setup Profile'}
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-4xl font-black leading-tight">
-                {theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'iOS'} home setup
+                {theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'iOS'} {isLockScreen ? 'lock screen' : 'home setup'}
               </h1>
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
                 <span className="inline-flex items-center gap-1.5">

@@ -5,6 +5,7 @@ import { DeleteButton } from './DeleteButton'
 import { EditButton } from './EditButton'
 
 type ExtractedTags = { theme?: string }
+type ScreenType = 'home' | 'lock'
 
 type Post = {
   id: string
@@ -20,6 +21,7 @@ type Props = { post: Post; priority?: boolean; showEdit?: boolean; featured?: bo
 export function PostCard({ post, priority, showEdit, featured }: Props) {
   const tags = post.extracted_tags ?? {}
   const theme = tags.theme
+  const screenType: ScreenType = (tags as { screen_type?: string; is_lock_screen?: boolean }).screen_type === 'lock' || (tags as { is_lock_screen?: boolean }).is_lock_screen ? 'lock' : 'home'
   const date = new Intl.DateTimeFormat('ja-JP', {
     month: 'short',
     day: 'numeric',
@@ -34,7 +36,7 @@ export function PostCard({ post, priority, showEdit, featured }: Props) {
               <div className="relative h-full overflow-hidden rounded-[2.15rem] bg-black">
                 <Image
                   src={post.image_url}
-                  alt="iOS home screen"
+                  alt={screenType === 'lock' ? 'iOS lock screen' : 'iOS home screen'}
                   fill
                   className="object-cover transition duration-500 group-hover:scale-[1.018]"
                   sizes={featured ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 320px'}
@@ -45,7 +47,7 @@ export function PostCard({ post, priority, showEdit, featured }: Props) {
                 <div className="absolute top-2 left-1/2 z-10 h-[3.2%] min-h-[18px] w-[28%] -translate-x-1/2 rounded-full bg-black shadow-[0_1px_3px_rgba(255,255,255,0.14)] pointer-events-none" />
                 {theme && (
                   <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-foreground shadow-lg">
-                    {theme}
+                    {screenType === 'lock' ? `lock / ${theme}` : theme}
                   </span>
                 )}
               </div>

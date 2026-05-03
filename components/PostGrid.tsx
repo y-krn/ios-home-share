@@ -61,7 +61,7 @@ export function PostGrid({ initialPosts, tag, theme, type, showEdit }: Props) {
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
           {tag || theme
             ? '別のアプリ、ウィジェット、テーマで探してみてください。'
-            : '最初のホーム画面が投稿されると、ここにギャラリーとして並びます。'}
+            : '最初のiPhone画面が投稿されると、ここにギャラリーとして並びます。'}
         </p>
       </div>
     )

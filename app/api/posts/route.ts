@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
       .webp({ quality: 80 })
       .toBuffer()
 
-    // AI解析 + ホーム画面判定
+    // AI解析 + 投稿対象判定
     let extractedTags: ExtractedTags & {
       app_links?: Record<string, unknown>
       widget_links?: Record<string, unknown>
@@ -114,12 +114,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'AI解析に失敗しました。再試行してください。' }, { status: 500 })
     }
 
-    // ホーム画面以外 → 拒否
-    if (!extractedTags.is_home_screen) {
+    const isHomeScreen = extractedTags.is_home_screen || extractedTags.screen_type === 'home'
+    const isLockScreen = extractedTags.is_lock_screen || extractedTags.screen_type === 'lock'
+    const isAllowedScreen = isHomeScreen || isLockScreen
+
+    // ホーム画面・ロック画面以外 → 拒否
+    if (!isAllowedScreen) {
       return NextResponse.json(
-        { error: 'iOSホーム画面のスクリーンショットのみ投稿可能です。' },
+        { error: 'iOSホーム画面またはロック画面のスクリーンショットのみ投稿可能です。' },
         { status: 400 }
       )
+    }
+
+    if (isLockScreen) {
+      extractedTags.screen_type = 'lock'
+      extractedTags.is_lock_screen = true
+      extractedTags.is_home_screen = false
+      extractedTags.apps = []
+      extractedTags.dock_apps = []
+    } else {
+      extractedTags.screen_type = 'home'
+      extractedTags.is_home_screen = true
+      extractedTags.is_lock_screen = false
     }
 
     // iTunes lookup 並列化

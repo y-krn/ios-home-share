@@ -11,8 +11,8 @@ import './globals.css'
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans', preload: false })
 
 export const metadata: Metadata = {
-  title: 'iSetup — iOSホーム画面を共有しよう',
-  description: 'iSetup.app — みんなのiOSホーム画面を覗き見。AIが自動でアプリ・ウィジェットを解析。',
+  title: 'iSetup — iOSホーム画面・ロック画面を共有しよう',
+  description: 'iSetup.app — みんなのiOSホーム画面・ロック画面を覗き見。AIが自動でアプリ・ウィジェットを解析。',
   metadataBase: new URL('https://isetup.app'),
 }
 

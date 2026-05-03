@@ -163,7 +163,7 @@ export function UploadForm() {
             <div>
               <h2 className="text-lg font-black leading-tight">Setup scanner</h2>
               <p className="mt-1 text-xs leading-relaxed text-muted">
-                投稿前にホーム画面らしさを確認し、アップロード後にAIがアプリとウィジェットを読み取ります。
+                投稿前にiPhone画面らしさを確認し、アップロード後にAIがアプリとウィジェットを読み取ります。
               </p>
             </div>
           </div>

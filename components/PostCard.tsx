@@ -22,6 +22,7 @@ export function PostCard({ post, priority, showEdit, featured }: Props) {
   const tags = post.extracted_tags ?? {}
   const theme = tags.theme
   const screenType: ScreenType = (tags as { screen_type?: string; is_lock_screen?: boolean }).screen_type === 'lock' || (tags as { is_lock_screen?: boolean }).is_lock_screen ? 'lock' : 'home'
+  const screenLabel = screenType === 'lock' ? 'Lock screen' : 'Home setup'
   const date = new Intl.DateTimeFormat('ja-JP', {
     month: 'short',
     day: 'numeric',
@@ -32,19 +33,24 @@ export function PostCard({ post, priority, showEdit, featured }: Props) {
       <Link href={`/posts/${post.id}`} prefetch={false} className="block">
         <div className={`gallery-shelf rounded-[2rem] p-3 sm:p-4 transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_-34px_rgba(0,0,0,0.65)] active:scale-[0.99] ${featured ? 'lg:p-5' : ''}`}>
           <div className="relative mx-auto max-w-[19rem]">
-            <div className="phone-frame relative aspect-[9/19.5] overflow-hidden rounded-[2.65rem] p-[8px]">
-              <div className="relative h-full overflow-hidden rounded-[2.15rem] bg-black">
+            <div className="relative rounded-[2rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_26px_58px_-38px_rgba(0,0,0,0.58)] ring-1 ring-black/5 dark:ring-white/10">
+              <div className="mb-2 flex items-center justify-between px-1">
+                <span className="rounded-full bg-black/75 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+                  {screenLabel}
+                </span>
+                <span className="h-1.5 w-10 rounded-full bg-black/18 dark:bg-white/18" />
+              </div>
+              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[1.55rem] bg-black shadow-[0_18px_40px_-30px_rgba(0,0,0,0.7)]">
                 <Image
                   src={post.image_url}
                   alt={screenType === 'lock' ? 'iOS lock screen' : 'iOS home screen'}
                   fill
-                  className="object-cover transition duration-500 group-hover:scale-[1.018]"
+                  className="object-cover"
                   sizes={featured ? '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 320px'}
                   loading={priority ? 'eager' : undefined}
                   fetchPriority={priority ? 'high' : undefined}
                 />
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.18),transparent_28%,transparent_74%,rgba(255,255,255,0.08))]" />
-                <div className="absolute top-2 left-1/2 z-10 h-[3.2%] min-h-[18px] w-[28%] -translate-x-1/2 rounded-full bg-black shadow-[0_1px_3px_rgba(255,255,255,0.14)] pointer-events-none" />
                 {theme && (
                   <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-foreground shadow-lg">
                     {screenType === 'lock' ? `lock / ${theme}` : theme}
@@ -52,8 +58,6 @@ export function PostCard({ post, priority, showEdit, featured }: Props) {
                 )}
               </div>
             </div>
-            <div className="absolute left-[-3px] top-[18%] h-12 w-1 rounded-l-full bg-black/70" />
-            <div className="absolute right-[-3px] top-[26%] h-16 w-1 rounded-r-full bg-black/70" />
           </div>
         </div>
       </Link>

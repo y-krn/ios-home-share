@@ -28,6 +28,7 @@ export default async function PostPage({ params, searchParams }: Props) {
   const theme: string = tags.theme ?? ''
   const screenType = tags.screen_type === 'lock' || tags.is_lock_screen ? 'lock' : 'home'
   const isLockScreen = screenType === 'lock'
+  const screenLabel = isLockScreen ? 'Lock screen' : 'Home setup'
   const appLinks: Record<string, { url: string; icon: string; trackName: string }> = tags.app_links ?? {}
   const widgetLinks: Record<string, { url: string; icon: string; trackName: string }> = tags.widget_links ?? {}
   const createdAt = new Intl.DateTimeFormat('ja-JP', {
@@ -56,8 +57,14 @@ export default async function PostPage({ params, searchParams }: Props) {
       <div className="grid gap-6 md:grid-cols-[minmax(270px,0.78fr)_minmax(0,1fr)] md:items-start">
         <section className="gallery-shelf order-2 rounded-[2.25rem] p-4 sm:p-5 md:order-none md:sticky md:top-20">
           <div className="relative mx-auto max-w-[15.5rem] sm:max-w-[18rem] lg:max-w-sm">
-            <div className="phone-frame relative aspect-[9/19.5] overflow-hidden rounded-[2.85rem] p-[9px]">
-              <div className="relative h-full overflow-hidden rounded-[2.32rem] bg-black">
+            <div className="relative rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+              <div className="mb-2.5 flex items-center justify-between px-1">
+                <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                  {screenLabel}
+                </span>
+                <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
+              </div>
+              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)]">
                 <Image
                   src={post.image_url}
                   alt={isLockScreen ? 'iOS lock screen' : 'iOS home screen'}
@@ -68,7 +75,6 @@ export default async function PostPage({ params, searchParams }: Props) {
                   fetchPriority="high"
                 />
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.18),transparent_28%,transparent_74%,rgba(255,255,255,0.08))]" />
-                <div className="absolute top-2 left-1/2 z-10 h-[3.2%] min-h-[18px] w-[28%] -translate-x-1/2 rounded-full bg-black shadow-[0_1px_3px_rgba(255,255,255,0.14)] pointer-events-none" />
                 {theme && (
                   <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-foreground shadow-lg">
                     {theme}
@@ -76,8 +82,6 @@ export default async function PostPage({ params, searchParams }: Props) {
                 )}
               </div>
             </div>
-            <div className="absolute left-[-3px] top-[18%] h-12 w-1 rounded-l-full bg-black/70" />
-            <div className="absolute right-[-3px] top-[26%] h-16 w-1 rounded-r-full bg-black/70" />
           </div>
         </section>
 

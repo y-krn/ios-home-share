@@ -49,8 +49,8 @@ export default async function UploadPage() {
       ) : (
         <div className="grid gap-5 md:grid-cols-[minmax(260px,0.9fr)_minmax(0,1fr)] md:items-start">
           <div className="gallery-shelf rounded-[2.25rem] p-5">
-            <div className="phone-frame mx-auto aspect-[9/19.5] max-w-[18rem] rounded-[2.85rem] p-[9px]">
-              <div className="flex h-full flex-col items-center justify-center rounded-[2.32rem] bg-black/90 p-6 text-center text-white">
+            <div className="phone-frame mx-auto aspect-[9/19.5] max-w-[18rem] overflow-hidden rounded-[2.85rem] p-[9px]">
+              <div className="flex h-full flex-col items-center justify-center overflow-hidden rounded-[2.32rem] bg-black/90 p-6 text-center text-white [clip-path:inset(0_round_2.32rem)]">
                 <Mail size={34} />
                 <div className="mt-4 text-lg font-black">Login required</div>
                 <p className="mt-2 text-xs leading-relaxed text-white/65">

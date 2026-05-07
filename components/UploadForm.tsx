@@ -105,15 +105,17 @@ export function UploadForm() {
       >
         <div className="relative mx-auto max-w-[18rem]">
           <div className="phone-frame relative aspect-[9/19.5] overflow-hidden rounded-[2.85rem] p-[9px]">
-            <div className="relative h-full overflow-hidden rounded-[2.32rem] bg-black">
+            <div className="relative h-full overflow-hidden rounded-[2.32rem] bg-black [clip-path:inset(0_round_2.32rem)]">
               {preview ? (
-                <Image
-                  src={preview}
-                  alt="preview"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 320px"
-                  className="object-cover"
-                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
+                  <Image
+                    src={preview}
+                    alt="preview"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 320px"
+                    className="object-contain"
+                  />
+                </div>
               ) : (
                 <div className="flex h-full flex-col justify-between bg-[linear-gradient(160deg,#d8c5a8,#e8efe8_44%,#7d5b45)] p-5 text-white">
                   <div className="space-y-4">

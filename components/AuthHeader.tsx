@@ -1,13 +1,34 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Upload, User, Sparkles } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { SignOutButton } from './SignOutButton'
 import { ThemeToggle } from './ThemeToggle'
 
-export async function AuthHeader() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const isAuthed = !!user && !user.is_anonymous
+export function AuthHeader() {
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    let mounted = true
+
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data.user
+      if (mounted) setIsAuthed(!!user && !user.is_anonymous)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user
+      setIsAuthed(!!user && !user.is_anonymous)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   return (
     <div className="flex items-center gap-1.5">

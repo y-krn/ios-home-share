@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "check:env": "node scripts/check-env.mjs",
+    "check": "npm run check:env && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",

@@ -2,6 +2,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Copy the example environment file and fill in local values:
+
+```bash
+cp .env.example .env.local
+```
+
 First, run the development server:
 
 ```bash
@@ -16,7 +22,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## QA
+
+Run the full local quality gate before larger changes:
+
+```bash
+npm run check
+```
+
+This runs:
+
+- `npm run check:env` to verify required local environment variables are present.
+- `npm run typecheck` to generate Next.js route types with `next typegen` and run `tsc --noEmit`.
+- `npm run build` to confirm the production build still succeeds.
+
+For faster iteration, each step can be run on its own.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

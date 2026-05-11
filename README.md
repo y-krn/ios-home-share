@@ -33,8 +33,10 @@ npm run check
 This runs:
 
 - `npm run check:env` to verify required local environment variables are present.
+- `npm run lint` to run the Next.js ESLint rules.
 - `npm run typecheck` to generate Next.js route types with `next typegen` and run `tsc --noEmit`.
 - `npm run build` to confirm the production build still succeeds.
+- `npm run test:browser` to start the production build and run Playwright smoke tests in desktop Chromium and mobile Safari.
 
 For faster iteration, each step can be run on its own.
 

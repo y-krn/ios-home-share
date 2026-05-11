@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import Link from 'next/link'
 import { PostGrid } from '@/components/PostGrid'
 import { Hero } from '@/components/Hero'
 import { AppIconBackdrop } from '@/components/AppIconBackdrop'
@@ -51,7 +52,7 @@ export default async function Home({ searchParams }: Props) {
           <span className="text-muted text-xs">フィルター</span>
           {tag && <span className="glass-soft px-3 py-1 rounded-full text-xs font-medium">{displayTag}</span>}
           {theme && <span className="glass-soft px-3 py-1 rounded-full text-xs font-medium">{theme}</span>}
-          <a href="/" className="text-muted hover:text-accent text-xs underline">クリア</a>
+          <Link href="/" className="text-muted hover:text-accent text-xs underline">クリア</Link>
         </div>
       )}
       <PostGrid initialPosts={posts} tag={tag} theme={theme} type={type} />

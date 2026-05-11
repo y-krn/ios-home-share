@@ -6,9 +6,11 @@
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
+    "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "check:env": "node scripts/check-env.mjs",
-    "check": "npm run check:env && npm run typecheck && npm run build"
+    "test:browser": "playwright test",
+    "check": "npm run check:env && npm run lint && npm run typecheck && npm run build && npm run test:browser"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
@@ -27,10 +29,13 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

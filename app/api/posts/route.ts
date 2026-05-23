@@ -122,10 +122,22 @@ export async function GET(req: NextRequest) {
     .limit(limit)
 
   if (cursor) query = query.lt('created_at', cursor)
-  if (tag) {
+
+  const ownedApps = searchParams.get('ownedApps')
+  if (ownedApps) {
+    const appsList = ownedApps.split(',').map(s => s.trim()).filter(Boolean)
+    if (appsList.length > 0) {
+      const orConditions = appsList.flatMap(app => [
+        `extracted_tags->apps.cs.${JSON.stringify([app])}`,
+        `extracted_tags->dock_apps.cs.${JSON.stringify([app])}`
+      ]).join(',')
+      query = query.or(orConditions)
+    }
+  } else if (tag) {
     const column = type === 'widget' ? 'widgets' : 'apps'
     query = query.contains(`extracted_tags->${column}`, JSON.stringify([tag]))
   }
+
   if (theme) query = query.eq('extracted_tags->>theme', theme)
 
   const { data, error } = await query

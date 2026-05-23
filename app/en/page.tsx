@@ -5,6 +5,7 @@ import { unstable_cache } from 'next/cache'
 import { AppIconBackdrop } from '@/components/AppIconBackdrop'
 import { PostGrid } from '@/components/PostGrid'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getPopularApps } from '@/lib/popular-apps'
 
 export const metadata: Metadata = {
   title: 'iSetup — Real iPhone setups, decoded',
@@ -50,6 +51,7 @@ const getCachedPosts = unstable_cache(
 
 export default async function EnglishHomePage() {
   const posts = await getCachedPosts()
+  const popularApps = await getPopularApps(15)
 
   return (
     <div className="space-y-8">
@@ -106,6 +108,7 @@ export default async function EnglishHomePage() {
           filteredEmptyDescription="Try another app, widget, or theme."
           loadingLabel="Loading..."
           locale="en"
+          popularApps={popularApps}
         />
       </section>
     </div>

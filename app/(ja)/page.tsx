@@ -5,6 +5,7 @@ import { Hero } from '@/components/Hero'
 import { AppIconBackdrop } from '@/components/AppIconBackdrop'
 import { lookupApp } from '@/lib/app-store'
 import { unstable_cache } from 'next/cache'
+import { getPopularApps } from '@/lib/popular-apps'
 
 type Props = {
   searchParams: Promise<{ tag?: string; theme?: string; type?: string }>
@@ -38,6 +39,7 @@ const getCachedPosts = unstable_cache(
 export default async function Home({ searchParams }: Props) {
   const { tag, theme, type } = await searchParams
   const posts = await getCachedPosts(tag, theme, type)
+  const popularApps = await getPopularApps(15)
 
   // タグ正式名解決 (iTunes API)
   const tagInfo = tag ? await lookupApp(tag) : null
@@ -55,7 +57,7 @@ export default async function Home({ searchParams }: Props) {
           <Link href="/" className="text-muted hover:text-accent text-xs underline">クリア</Link>
         </div>
       )}
-      <PostGrid initialPosts={posts} tag={tag} theme={theme} type={type} />
+      <PostGrid initialPosts={posts} tag={tag} theme={theme} type={type} popularApps={popularApps} />
     </div>
   )
 }

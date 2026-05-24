@@ -9,6 +9,7 @@ import { LikeButton } from '@/components/LikeButton'
 import { TagBadge } from '@/components/TagBadge'
 import { AppLink } from '@/components/AppLink'
 import { ShareButton } from '@/components/ShareButton'
+import { RecreateChecklist } from '@/components/RecreateChecklist'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -214,6 +215,8 @@ export async function PostDetail({ id, posted, locale = 'ja' }: { id: string; po
               <div className="text-[11px] font-semibold text-muted">Colors</div>
             </div>
           </div>
+
+          <RecreateChecklist postId={post.id} extractedTags={tags} locale={locale} />
 
           {colors.length > 0 && (
             <div className="gallery-caption rounded-3xl p-4 space-y-3">

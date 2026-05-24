@@ -43,8 +43,8 @@ export default async function EnglishUploadPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle size={17} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
-              <span className="font-semibold">Do not upload screenshots with personal information. </span>
-              <span className="text-muted">Check for notifications, contacts, location, photos, and private widgets before sharing.</span>
+              <span className="font-semibold">Personal info is automatically masked by AI. </span>
+              <span className="text-muted">Notification badges and private widgets are auto-detected, but please double-check the preview before publishing.</span>
             </p>
           </div>
         </div>

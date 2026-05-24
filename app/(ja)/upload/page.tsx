@@ -35,8 +35,8 @@ export default async function UploadPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle size={17} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
-              <span className="font-semibold">個人情報を含むスクショは投稿しないでください。</span>
-              <span className="text-muted">通知・連絡先・位置情報・写真サムネなどが映り込んでいないか確認を。</span>
+              <span className="font-semibold">個人情報はAIが自動でぼかし保護します。</span>
+              <span className="text-muted">通知・カレンダー等の映り込みは自動検出されますが、投稿前にプレビューで状態をご確認ください。</span>
             </p>
           </div>
         </div>

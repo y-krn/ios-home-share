@@ -88,8 +88,7 @@ export default async function EnglishHomePage() {
             Discover real iPhone setups.
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted sm:text-base">
-            Browse home screens and lock screens from real people, with apps,
-            widgets, colors, and themes automatically detected.
+            Browse home screens and lock screens from real people. AI automatically masks personal info (notifications & calendar events) with editable blurs.
           </p>
         </div>
 

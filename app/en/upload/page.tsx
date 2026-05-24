@@ -63,14 +63,22 @@ export default async function EnglishUploadPage() {
         <UploadForm locale="en" />
       ) : (
         <div className="grid gap-5 md:grid-cols-[minmax(260px,0.9fr)_minmax(0,1fr)] md:items-start">
-          <div className="gallery-shelf rounded-[2.25rem] p-5">
-            <div className="phone-frame mx-auto aspect-[9/19.5] max-w-[18rem] overflow-hidden rounded-[2.85rem] p-[9px]">
-              <div className="flex h-full flex-col items-center justify-center overflow-hidden rounded-[2.32rem] bg-black/90 p-6 text-center text-white [clip-path:inset(0_round_2.32rem)]">
-                <Mail size={34} />
-                <div className="mt-4 text-lg font-black">Login required</div>
-                <p className="mt-2 text-xs leading-relaxed text-white/65">
-                  Use a magic link to share and manage your setup.
-                </p>
+          <div className="gallery-shelf w-full rounded-[2.25rem] p-5">
+            <div className="relative mx-auto w-full max-w-[18rem]">
+              <div className="relative w-full rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+                <div className="mb-2.5 flex items-center justify-between px-1">
+                  <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                    Setup
+                  </span>
+                  <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
+                </div>
+                <div className="relative w-full aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black/90 shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)] flex flex-col items-center justify-center p-6 text-center text-white">
+                  <Mail size={34} />
+                  <div className="mt-4 text-lg font-black">Login required</div>
+                  <p className="mt-2 text-xs leading-relaxed text-white/65">
+                    Use a magic link to share and manage your setup.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

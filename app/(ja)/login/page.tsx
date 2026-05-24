@@ -48,17 +48,25 @@ export default async function LoginPage({ searchParams }: Props) {
         )}
       </section>
 
-      <section className="gallery-shelf order-3 rounded-[2.25rem] p-4 sm:p-5 md:order-none">
-        <div className="phone-frame mx-auto aspect-[9/19.5] max-w-[18rem] rounded-[2.85rem] p-[9px]">
-          <div className="relative flex h-full flex-col items-center justify-center overflow-hidden rounded-[2.32rem] bg-black p-6 text-center text-white">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(94,234,212,0.3),transparent_38%),linear-gradient(145deg,#0b1513,#050606)]" />
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-white/12 backdrop-blur-md">
-              <Mail size={30} />
+      <section className="gallery-shelf w-full order-3 rounded-[2.25rem] p-4 sm:p-5 md:order-none">
+        <div className="relative mx-auto w-full max-w-[18rem]">
+          <div className="relative w-full rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+            <div className="mb-2.5 flex items-center justify-between px-1">
+              <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                Access
+              </span>
+              <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
             </div>
-            <div className="relative mt-5 text-xl font-black">Magic Link</div>
-            <p className="relative mt-2 max-w-[12rem] text-xs leading-relaxed text-white/65">
-              受信したリンクを開くだけでサインインできます。
-            </p>
+            <div className="relative w-full aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)] flex flex-col items-center justify-center p-6 text-center text-white">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(94,234,212,0.3),transparent_38%),linear-gradient(145deg,#0b1513,#050606)]" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-white/12 backdrop-blur-md">
+                <Mail size={30} />
+              </div>
+              <div className="relative mt-5 text-xl font-black">Magic Link</div>
+              <p className="relative mt-2 max-w-[12rem] text-xs leading-relaxed text-white/65">
+                受信したリンクを開くだけでサインインできます。
+              </p>
+            </div>
           </div>
         </div>
       </section>

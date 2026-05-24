@@ -468,9 +468,9 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
 
     return (
       <div className="grid gap-6 md:grid-cols-[minmax(270px,0.78fr)_minmax(0,1fr)] md:items-start">
-        <section className="gallery-shelf rounded-[2.25rem] p-4 sm:p-5 md:sticky md:top-20">
-          <div className="relative mx-auto max-w-[15.5rem] sm:max-w-[18rem] lg:max-w-sm">
-            <div className="relative rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+        <section className="gallery-shelf w-full rounded-[2.25rem] p-4 sm:p-5 md:sticky md:top-20">
+          <div className="relative mx-auto w-full max-w-[15.5rem] sm:max-w-[18rem] lg:max-w-sm">
+            <div className="relative w-full rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
               <div className="mb-2.5 flex items-center justify-between px-1">
                 <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
                   {screenLabel}
@@ -479,7 +479,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
               </div>
               <div
                 ref={containerRef}
-                className={`relative aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)] select-none ${
+                className={`relative w-full aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)] select-none ${
                   isEditingRedactions ? 'touch-none' : ''
                 }`}
                 onPointerMove={handlePointerMove}
@@ -745,11 +745,17 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
             inputRef.current?.click()
           }
         }}
-        className="gallery-shelf rounded-[2.25rem] p-4 sm:p-5 text-left transition duration-300 hover:-translate-y-1 active:scale-[0.99] cursor-pointer"
+        className="gallery-shelf w-full rounded-[2.25rem] p-4 sm:p-5 text-left transition duration-300 hover:-translate-y-1 active:scale-[0.99] cursor-pointer"
       >
-        <div className="relative mx-auto max-w-[15.5rem] sm:max-w-[18rem]">
-          <div className="phone-frame relative aspect-[9/19.5] overflow-hidden rounded-[2.85rem] p-[9px]">
-            <div className="relative h-full overflow-hidden rounded-[2.32rem] bg-black [clip-path:inset(0_round_2.32rem)]">
+        <div className="relative mx-auto w-full max-w-[15.5rem] sm:max-w-[18rem]">
+          <div className="relative w-full rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+            <div className="mb-2.5 flex items-center justify-between px-1">
+              <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                {locale === 'en' ? 'Screenshot' : 'スクショ'}
+              </span>
+              <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
+            </div>
+            <div className="relative w-full aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)]">
               {preview ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-black">
                   <Image
@@ -793,8 +799,6 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
               )}
             </div>
           </div>
-          <div className="absolute left-[-3px] top-[18%] h-12 w-1 rounded-l-full bg-black/70" />
-          <div className="absolute right-[-3px] top-[26%] h-16 w-1 rounded-r-full bg-black/70" />
         </div>
       </div>
 

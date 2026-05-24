@@ -735,12 +735,19 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
 
   return (
     <form onSubmit={onSubmit} className="grid gap-5 md:grid-cols-[minmax(260px,0.92fr)_minmax(0,1fr)] md:items-start">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => inputRef.current?.click()}
-        className="gallery-shelf rounded-[2.25rem] p-4 sm:p-5 text-left transition duration-300 hover:-translate-y-1 active:scale-[0.99]"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            inputRef.current?.click()
+          }
+        }}
+        className="gallery-shelf rounded-[2.25rem] p-4 sm:p-5 text-left transition duration-300 hover:-translate-y-1 active:scale-[0.99] cursor-pointer"
       >
-        <div className="relative mx-auto max-w-[18rem]">
+        <div className="relative mx-auto max-w-[15.5rem] sm:max-w-[18rem]">
           <div className="phone-frame relative aspect-[9/19.5] overflow-hidden rounded-[2.85rem] p-[9px]">
             <div className="relative h-full overflow-hidden rounded-[2.32rem] bg-black [clip-path:inset(0_round_2.32rem)]">
               {preview ? (
@@ -760,7 +767,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
                     <div className="grid grid-cols-4 gap-3 pt-8">
                       {Array.from({ length: 16 }).map((_, i) => (
                         <span
-                          key={i}
+                           key={i}
                           className="aspect-square rounded-[1.1rem] bg-white/75 shadow-lg shadow-black/10"
                           style={{ opacity: 0.92 - (i % 4) * 0.08 }}
                         />
@@ -789,7 +796,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
           <div className="absolute left-[-3px] top-[18%] h-12 w-1 rounded-l-full bg-black/70" />
           <div className="absolute right-[-3px] top-[26%] h-16 w-1 rounded-r-full bg-black/70" />
         </div>
-      </button>
+      </div>
 
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
 

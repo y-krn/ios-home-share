@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { CheckCircle2, Cloud, ImageIcon, Loader2, ScanLine, Smartphone, Upload } from 'lucide-react'
+import { Check, CheckCircle2, Cloud, Edit, ImageIcon, Loader2, ScanLine, Smartphone, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ListEditor, type AppInfo } from '@/components/EditTagsForm'
-import type { ExtractedTags } from '@/lib/gemini'
+import type { ExtractedTags, BoundingBox } from '@/lib/gemini'
 
 const stepIcons = {
   prepare: Cloud,
@@ -151,7 +151,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
 
   // New confirmation state & editable tags states
   const [analyzeResult, setAnalyzeResult] = useState<{
-    tempRedactedPath: string
+    tempOriginalPath: string
     imageUrl: string
     extractedTags: ExtractedTags
   } | null>(null)
@@ -162,6 +162,19 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
   const [appLinks, setAppLinks] = useState<Record<string, AppInfo>>({})
   const [widgetLinks, setWidgetLinks] = useState<Record<string, AppInfo>>({})
   const [publishing, setPublishing] = useState(false)
+
+  // Redaction box editing states
+  const [isEditingRedactions, setIsEditingRedactions] = useState(false)
+  const [redactionBoxes, setRedactionBoxes] = useState<BoundingBox[]>([])
+  const [activeBoxIndex, setActiveBoxIndex] = useState<number | null>(null)
+  const [dragInfo, setDragInfo] = useState<{
+    index: number
+    action: 'move' | 'resize'
+    startX: number
+    startY: number
+    initialBox: BoundingBox
+  } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     return () => {
@@ -178,8 +191,126 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
       setTheme(tags.theme ?? '')
       setAppLinks(tags.app_links ?? {})
       setWidgetLinks(tags.widget_links ?? {})
+      setRedactionBoxes(tags.redaction_boxes ?? [])
+      setActiveBoxIndex(null)
+      setIsEditingRedactions(false)
     }
   }, [analyzeResult])
+
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>, index: number, action: 'move' | 'resize') {
+    if (!isEditingRedactions) return
+    e.stopPropagation()
+    setActiveBoxIndex(index)
+    setDragInfo({
+      index,
+      action,
+      startX: e.clientX,
+      startY: e.clientY,
+      initialBox: { ...redactionBoxes[index] }
+    })
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragInfo || !containerRef.current) return
+    e.stopPropagation()
+
+    const { index, action, startX, startY, initialBox } = dragInfo
+    const rect = containerRef.current.getBoundingClientRect()
+    const dx = e.clientX - startX
+    const dy = e.clientY - startY
+
+    const deltaX = (dx / rect.width) * 1000
+    const deltaY = (dy / rect.height) * 1000
+
+    const newBoxes = [...redactionBoxes]
+    const box = { ...newBoxes[index] }
+
+    if (action === 'move') {
+      const w = initialBox.xmax - initialBox.xmin
+      const h = initialBox.ymax - initialBox.ymin
+      let xmin = initialBox.xmin + deltaX
+      let ymin = initialBox.ymin + deltaY
+
+      if (xmin < 0) xmin = 0
+      if (ymin < 0) ymin = 0
+      if (xmin + w > 1000) xmin = 1000 - w
+      if (ymin + h > 1000) ymin = 1000 - h
+
+      box.xmin = Math.round(xmin)
+      box.ymin = Math.round(ymin)
+      box.xmax = Math.round(xmin + w)
+      box.ymax = Math.round(ymin + h)
+    } else if (action === 'resize') {
+      let xmax = initialBox.xmax + deltaX
+      let ymax = initialBox.ymax + deltaY
+
+      if (xmax < initialBox.xmin + 20) xmax = initialBox.xmin + 20
+      if (ymax < initialBox.ymin + 20) ymax = initialBox.ymin + 20
+      if (xmax > 1000) xmax = 1000
+      if (ymax > 1000) ymax = 1000
+
+      box.xmax = Math.round(xmax)
+      box.ymax = Math.round(ymax)
+    }
+
+    newBoxes[index] = box
+    setRedactionBoxes(newBoxes)
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragInfo) return
+    e.stopPropagation()
+    e.currentTarget.releasePointerCapture(e.pointerId)
+    setDragInfo(null)
+  }
+
+  function handleImageClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!isEditingRedactions || !containerRef.current) return
+
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    const clickX = (x / rect.width) * 1000
+    const clickY = (y / rect.height) * 1000
+
+    const w = 160
+    const h = 40
+
+    let xmin = clickX - w / 2
+    let ymin = clickY - h / 2
+
+    if (xmin < 0) xmin = 0
+    if (ymin < 0) ymin = 0
+    if (xmin + w > 1000) xmin = 1000 - w
+    if (ymin + h > 1000) ymin = 1000 - h
+
+    const newBox: BoundingBox = {
+      xmin: Math.round(xmin),
+      ymin: Math.round(ymin),
+      xmax: Math.round(xmin + w),
+      ymax: Math.round(ymin + h),
+      label: 'sensitive_text'
+    }
+
+    const updatedBoxes = [...redactionBoxes, newBox]
+    setRedactionBoxes(updatedBoxes)
+    setActiveBoxIndex(updatedBoxes.length - 1)
+  }
+
+  function updateActiveBoxLabel(label: 'sensitive_text' | 'notification_badge') {
+    if (activeBoxIndex === null) return
+    const newBoxes = [...redactionBoxes]
+    newBoxes[activeBoxIndex] = { ...newBoxes[activeBoxIndex], label }
+    setRedactionBoxes(newBoxes)
+  }
+
+  function deleteBox(index: number) {
+    const newBoxes = redactionBoxes.filter((_, i) => i !== index)
+    setRedactionBoxes(newBoxes)
+    setActiveBoxIndex(null)
+  }
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -239,12 +370,12 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
         return
       }
       const result = await res.json().catch(() => null) as {
-        tempRedactedPath: string
+        tempOriginalPath: string
         imageUrl: string
         extractedTags: ExtractedTags
       } | null
 
-      if (!result || !result.tempRedactedPath || !result.imageUrl || !result.extractedTags) {
+      if (!result || !result.tempOriginalPath || !result.imageUrl || !result.extractedTags) {
         setError(t.postError(500))
         setUploading(false)
         setActiveStep(null)
@@ -274,6 +405,9 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
     setTheme('')
     setAppLinks({})
     setWidgetLinks({})
+    setRedactionBoxes([])
+    setActiveBoxIndex(null)
+    setIsEditingRedactions(false)
     setError(null)
     setUploading(false)
     setActiveStep(null)
@@ -298,13 +432,14 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
         app_links: appLinks,
         widget_links: widgetLinks,
         wallpaper_colors: analyzeResult.extractedTags.wallpaper_colors,
+        redaction_boxes: redactionBoxes,
       }
 
       const res = await fetch(`/api/posts${localeParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tempRedactedPath: analyzeResult.tempRedactedPath,
+          tempOriginalPath: analyzeResult.tempOriginalPath,
           extractedTags: finalTags,
         }),
       })
@@ -342,22 +477,171 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
                 </span>
                 <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
               </div>
-              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)]">
+              <div
+                ref={containerRef}
+                className={`relative aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)] select-none ${
+                  isEditingRedactions ? 'touch-none' : ''
+                }`}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              >
                 <Image
-                  src={analyzeResult.imageUrl}
-                  alt="redacted preview"
+                  src={preview || analyzeResult.imageUrl}
+                  alt="preview"
                   fill
                   sizes="(max-width: 1024px) 100vw, 390px"
-                  className="object-cover"
+                  className="object-cover select-none pointer-events-none"
                   priority
                 />
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.18),transparent_28%,transparent_74%,rgba(255,255,255,0.08))]" />
+
+                {/* CSS/SVG Redaction Overlays */}
+                {redactionBoxes.map((box, index) => {
+                  const top = box.ymin / 10
+                  const left = box.xmin / 10
+                  const width = (box.xmax - box.xmin) / 10
+                  const height = (box.ymax - box.ymin) / 10
+                  const isActive = activeBoxIndex === index
+
+                  return (
+                    <div
+                      key={index}
+                      onPointerDown={(e) => handlePointerDown(e, index, 'move')}
+                      className={`absolute border transition-shadow cursor-move touch-none ${
+                        isActive
+                          ? 'border-accent ring-2 ring-accent/30 z-30'
+                          : 'border-dashed border-white/60 hover:border-white z-20'
+                      }`}
+                      style={{
+                        top: `${top}%`,
+                        left: `${left}%`,
+                        width: `${width}%`,
+                        height: `${height}%`,
+                      }}
+                    >
+                      {box.label === 'notification_badge' ? (
+                        <div className="w-full h-full bg-black rounded-full opacity-90 shadow-md animate-fade-in" />
+                      ) : (
+                        <div className="w-full h-full backdrop-blur-md bg-white/20 shadow-md animate-fade-in" />
+                      )}
+
+                      {isEditingRedactions && isActive && (
+                        <>
+                          {/* Close/Delete button */}
+                          <button
+                            type="button"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              e.preventDefault()
+                              deleteBox(index)
+                            }}
+                            className="absolute -top-3 -right-3 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-white shadow-md hover:bg-danger-strong transition-colors z-40 select-none touch-none"
+                          >
+                            <span className="text-xs font-bold leading-none">×</span>
+                          </button>
+
+                          {/* Resize Handle */}
+                          <div
+                            onPointerDown={(e) => handlePointerDown(e, index, 'resize')}
+                            className="absolute -bottom-1.5 -right-1.5 h-4 w-4 bg-accent border-2 border-white rounded-full shadow-md cursor-se-resize z-40 touch-none"
+                          />
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {/* Click target for adding new boxes */}
+                {isEditingRedactions && (
+                  <div
+                    onClick={handleImageClick}
+                    className="absolute inset-0 z-10 cursor-crosshair image-click-target touch-none"
+                    style={{ touchAction: 'none' }}
+                  />
+                )}
+
                 {theme && (
-                  <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-foreground shadow-lg">
+                  <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-foreground shadow-lg z-20">
                     {theme}
                   </span>
                 )}
               </div>
+            </div>
+
+            {/* Redaction Editing Controls */}
+            <div className="mt-4 space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingRedactions(!isEditingRedactions)
+                  setActiveBoxIndex(null)
+                }}
+                className={`w-full flex items-center justify-center gap-2 h-10 rounded-full text-xs font-semibold transition-all ${
+                  isEditingRedactions
+                    ? 'bg-accent text-white shadow-md'
+                    : 'border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 text-muted'
+                }`}
+              >
+                {isEditingRedactions ? (
+                  <>
+                    <Check size={14} />
+                    {locale === 'en' ? 'Finish Editing Blur' : 'ぼかし編集を完了'}
+                  </>
+                ) : (
+                  <>
+                    <Edit size={14} />
+                    {locale === 'en' ? 'Edit Privacy Blur' : 'プライバシーぼかしを編集'}
+                  </>
+                )}
+              </button>
+
+              {isEditingRedactions && (
+                <p className="text-[10px] text-center text-muted leading-normal">
+                  {locale === 'en'
+                    ? 'Tap image to add blur. Drag center to move, drag handle to resize.'
+                    : '画像をタップして枠を追加。中央ドラッグで移動、右下ドラッグでサイズ調整。'}
+                </p>
+              )}
+
+              {isEditingRedactions && activeBoxIndex !== null && redactionBoxes[activeBoxIndex] && (
+                <div className="p-3 rounded-2xl bg-black/5 dark:bg-white/5 space-y-2 animate-fade-in">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-muted uppercase tracking-wider">
+                    <span>Type</span>
+                    <button
+                      type="button"
+                      onClick={() => deleteBox(activeBoxIndex)}
+                      className="text-danger hover:underline font-bold"
+                    >
+                      {locale === 'en' ? 'Delete' : '削除'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => updateActiveBoxLabel('sensitive_text')}
+                      className={`py-1 rounded-lg text-xs font-semibold transition-all ${
+                        redactionBoxes[activeBoxIndex].label === 'sensitive_text'
+                          ? 'bg-white text-black shadow-sm dark:bg-white/15 dark:text-white'
+                          : 'text-muted hover:text-foreground'
+                      }`}
+                    >
+                      {locale === 'en' ? 'Blur' : 'ぼかし'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateActiveBoxLabel('notification_badge')}
+                      className={`py-1 rounded-lg text-xs font-semibold transition-all ${
+                        redactionBoxes[activeBoxIndex].label === 'notification_badge'
+                          ? 'bg-white text-black shadow-sm dark:bg-white/15 dark:text-white'
+                          : 'text-muted hover:text-foreground'
+                      }`}
+                    >
+                      {locale === 'en' ? 'Blackout' : '黒塗り'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -430,7 +714,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
               type="button"
               onClick={onCancel}
               disabled={publishing}
-              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold border border-black/10 dark:border-white/10 text-foreground hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold gallery-caption text-muted hover:text-foreground active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.cancelLabel}
             </button>

@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { type ExtractedTags } from '@/lib/gemini'
+import { applyRedaction } from '@/lib/redaction'
 
 const BUCKET = 'screenshots'
 type Locale = 'ja' | 'en'
@@ -80,14 +81,14 @@ export async function POST(req: NextRequest) {
     if (user.is_anonymous) return NextResponse.json({ error: message(locale, '投稿にはメール認証が必要です', 'Email login is required to post.') }, { status: 403 })
 
     const body = await req.json().catch(() => null) as {
-      tempRedactedPath?: string
+      tempOriginalPath?: string
       extractedTags?: ExtractedTags
     } | null
 
-    const tempRedactedPath = body?.tempRedactedPath
+    const tempOriginalPath = body?.tempOriginalPath
     const extractedTags = body?.extractedTags
 
-    if (!tempRedactedPath || !tempRedactedPath.startsWith('temp/redacted-') || !extractedTags) {
+    if (!tempOriginalPath || !tempOriginalPath.startsWith('temp/original-') || !extractedTags) {
       return NextResponse.json({ error: message(locale, 'アップロード情報が不正です', 'The upload information is invalid.') }, { status: 400 })
     }
 
@@ -96,14 +97,25 @@ export async function POST(req: NextRequest) {
     // 確定された保存先パスの生成
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
 
-    // ファイルを移動する
-    const { error: moveError } = await admin.storage
-      .from(BUCKET)
-      .move(tempRedactedPath, path)
+    // Storage から原本ダウンロード
+    const { data: blob, error: dlError } = await admin.storage.from(BUCKET).download(tempOriginalPath)
+    if (dlError || !blob) {
+      console.error('download original failed:', dlError)
+      return NextResponse.json({ error: message(locale, 'アップロード済みファイルが見つかりません', 'Could not find the uploaded file. Please try again.') }, { status: 400 })
+    }
+    const originalBuffer = Buffer.from(await blob.arrayBuffer())
 
-    if (moveError) {
-      console.error('Move storage file failed:', moveError)
-      return NextResponse.json({ error: message(locale, '画像の確定処理に失敗しました', 'Failed to publish the image.') }, { status: 500 })
+    // ぼかし/黒塗り処理を適用
+    const finalBuffer = await applyRedaction(originalBuffer, extractedTags.redaction_boxes || [])
+
+    // finalized 画像をアップロード
+    const { error: uploadError } = await admin.storage
+      .from(BUCKET)
+      .upload(path, finalBuffer, { contentType: 'image/webp', upsert: false })
+
+    if (uploadError) {
+      console.error('Upload redacted file failed:', uploadError)
+      return NextResponse.json({ error: message(locale, '画像の保存に失敗しました', 'Failed to save the image.') }, { status: 500 })
     }
 
     const { data: urlData } = admin.storage.from(BUCKET).getPublicUrl(path)
@@ -121,6 +133,9 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) throw error
+
+    // 一時ファイルを削除
+    await admin.storage.from(BUCKET).remove([tempOriginalPath]).catch(() => {})
 
     revalidatePath('/')
     revalidateTag('home-posts', 'max')

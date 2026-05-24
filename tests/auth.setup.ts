@@ -23,10 +23,14 @@ setup('authenticate', async ({ page, request }) => {
     const response = await request.get('http://127.0.0.1:54324/api/v1/messages')
     if (response.ok()) {
       const data = await response.json()
-      const messages = data.messages || []
+      interface MailpitMessage {
+        ID: string
+        To?: { Address: string }[]
+      }
+      const messages = (data.messages || []) as MailpitMessage[]
       // 最新のメールから、testEmail宛てのものを探す
-      const foundMsg = messages.find((m: any) =>
-        m.To && m.To.some((to: any) => to.Address === testEmail)
+      const foundMsg = messages.find(m =>
+        m.To && m.To.some(to => to.Address === testEmail)
       )
       
       if (foundMsg) {

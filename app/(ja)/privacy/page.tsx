@@ -80,7 +80,16 @@ export default function PrivacyPage() {
           <p>本ポリシーは予告なく変更される場合があります。変更後のポリシーは、本サービス上に掲示された時点で効力を生じます。</p>
         </Section>
 
-        <Section title="9. お問い合わせ">
+        <Section title="9. GDPR等に基づくEU/EEA・英国居住者の権利">
+          <p>
+            EU一般データ保護規則（GDPR）および英国GDPRに基づき、欧州経済領域（EEA）および英国に居住する利用者は、運営者が保有する自身の個人データについて、開示、訂正、消去（忘れられる権利）、処理の制限、データポータビリティ、異議申し立て、および同意の撤回を請求する権利を有します。
+          </p>
+          <p>
+            権利行使を希望される場合は、下記お問い合わせ窓口（contact@isetup.app）までご連絡ください。
+          </p>
+        </Section>
+
+        <Section title="10. お問い合わせ">
           <p className="text-sm">
             メール: <a href="mailto:contact@isetup.app" className="text-accent hover:underline">contact@isetup.app</a>
           </p>

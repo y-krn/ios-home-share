@@ -83,6 +83,15 @@ export default function EnglishPrivacyPage() {
         <Section title="7. Cookies">
           <p>iSetup.app uses cookies for authentication sessions. Login features may not work if cookies are disabled.</p>
         </Section>
+
+        <Section title="8. EU/EEA and UK Privacy Rights (GDPR)">
+          <p>
+            Under the EU General Data Protection Regulation (GDPR) and UK GDPR, users in the European Economic Area (EEA) and the United Kingdom have the rights to access, rectify, or erase their personal data, restrict or object to its processing, request data portability, and withdraw consent at any time.
+          </p>
+          <p>
+            To exercise any of these rights, please email us at <a href="mailto:contact@isetup.app" className="text-accent hover:underline">contact@isetup.app</a>.
+          </p>
+        </Section>
       </div>
     </article>
   )

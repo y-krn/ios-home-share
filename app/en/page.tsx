@@ -6,6 +6,7 @@ import { AppIconBackdrop } from '@/components/AppIconBackdrop'
 import { PostGrid } from '@/components/PostGrid'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getPopularApps } from '@/lib/popular-apps'
+import { extractTrackId, lookupAppByTrackId } from '@/lib/app-store'
 
 export const metadata: Metadata = {
   title: 'iSetup — Real iPhone setups, decoded',
@@ -49,9 +50,30 @@ const getCachedPosts = unstable_cache(
   { revalidate: 60, tags: ['home-posts'] },
 )
 
+async function lookupEnglishApp(trackId: string) {
+  const item = (await lookupAppByTrackId(trackId, 'us')) ?? (await lookupAppByTrackId(trackId, 'jp'))
+  if (!item) return null
+
+  return {
+    icon: item.artworkUrl100,
+    trackName: item.trackName,
+    url: item.trackViewUrl,
+  }
+}
+
 export default async function EnglishHomePage() {
   const posts = await getCachedPosts()
-  const popularApps = await getPopularApps(15)
+  const rawPopularApps = await getPopularApps(15)
+  const popularApps = await Promise.all(
+    rawPopularApps.map(async (app) => {
+      const trackId = app.info ? extractTrackId(app.info.url) : null
+      const englishInfo = trackId ? await lookupEnglishApp(trackId) : null
+      return {
+        ...app,
+        info: englishInfo ?? app.info,
+      }
+    })
+  )
 
   return (
     <div className="space-y-8">

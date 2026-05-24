@@ -23,11 +23,25 @@ export function Footer() {
           <ShieldCheck size={13} />
           {privacyLabel}
         </Link>
-        <Link href="/en" prefetch={false} className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 hover:text-accent transition-colors">
+        <Link
+          href="/en"
+          prefetch={false}
+          onClick={() => {
+            document.cookie = "pref-locale=en; path=/; max-age=31536000; SameSite=Lax"
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 hover:text-accent transition-colors"
+        >
           <Languages size={13} />
           English
         </Link>
-        <Link href="/" prefetch={false} className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 hover:text-accent transition-colors">
+        <Link
+          href="/"
+          prefetch={false}
+          onClick={() => {
+            document.cookie = "pref-locale=ja; path=/; max-age=31536000; SameSite=Lax"
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 hover:text-accent transition-colors"
+        >
           日本語
         </Link>
         <span className="px-2 py-1">© iSetup.app</span>

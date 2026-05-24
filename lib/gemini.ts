@@ -20,6 +20,8 @@ export type ExtractedTags = {
   theme: 'dark' | 'light' | ''
   dock_apps: string[]
   redaction_boxes?: BoundingBox[]
+  app_links?: Record<string, { url: string; icon: string; trackName: string }>
+  widget_links?: Record<string, { url: string; icon: string; trackName: string }>
 }
 
 const PROMPT = `Analyze this image and return JSON only, no explanation.

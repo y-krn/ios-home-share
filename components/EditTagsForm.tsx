@@ -7,13 +7,15 @@ import { Loader2, Search, Save, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { getCurrentUserId } from '@/lib/auth'
 
-type AppInfo = { url: string; icon: string; trackName: string }
+export type AppInfo = { url: string; icon: string; trackName: string }
 type Candidate = { trackName: string; artistName: string; url: string; icon: string }
 type Locale = 'ja' | 'en'
 
 type Props = {
   postId: string
   ownerAnonId: string | null
+  imageUrl?: string
+  screenType?: 'home' | 'lock'
   initialApps: string[]
   initialDockApps: string[]
   initialWidgets: string[]
@@ -82,7 +84,7 @@ const copy = {
   savedPath: (postId: string) => string
 }>
 
-function ListEditor({
+export function ListEditor({
   label,
   items,
   setItems,
@@ -261,6 +263,8 @@ function ListEditor({
 export function EditTagsForm({
   postId,
   ownerAnonId,
+  imageUrl,
+  screenType,
   initialApps,
   initialDockApps,
   initialWidgets,
@@ -319,10 +323,19 @@ export function EditTagsForm({
     router.refresh()
   }
 
-  return (
+  const isLockScreen = screenType === 'lock'
+  const screenLabel = isLockScreen
+    ? (locale === 'en' ? 'Lock Screen' : 'Lock screen')
+    : (locale === 'en' ? 'Home Screen' : 'Home setup')
+
+  const formContent = (
     <div className="space-y-6">
-      <ListEditor label={t.appsLabel} items={apps} setItems={setApps} placeholder={t.appsPlaceholder} links={appLinks} setLinks={setAppLinks} locale={locale} />
-      <ListEditor label={t.dockLabel} items={dockApps} setItems={setDockApps} placeholder={t.dockPlaceholder} links={appLinks} setLinks={setAppLinks} locale={locale} />
+      {!isLockScreen && (
+        <>
+          <ListEditor label={t.appsLabel} items={apps} setItems={setApps} placeholder={t.appsPlaceholder} links={appLinks} setLinks={setAppLinks} locale={locale} />
+          <ListEditor label={t.dockLabel} items={dockApps} setItems={setDockApps} placeholder={t.dockPlaceholder} links={appLinks} setLinks={setAppLinks} locale={locale} />
+        </>
+      )}
       <ListEditor label={t.widgetsLabel} items={widgets} setItems={setWidgets} placeholder={t.widgetsPlaceholder} links={widgetLinks} setLinks={setWidgetLinks} locale={locale} />
 
       <section className="gallery-caption rounded-[2rem] p-4 sm:p-5 space-y-3">
@@ -356,4 +369,45 @@ export function EditTagsForm({
       </button>
     </div>
   )
+
+  if (imageUrl) {
+    return (
+      <div className="grid gap-6 md:grid-cols-[minmax(270px,0.78fr)_minmax(0,1fr)] md:items-start">
+        <section className="gallery-shelf rounded-[2.25rem] p-4 sm:p-5 md:sticky md:top-20">
+          <div className="relative mx-auto max-w-[15.5rem] sm:max-w-[18rem] lg:max-w-sm">
+            <div className="relative rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+              <div className="mb-2.5 flex items-center justify-between px-1">
+                <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                  {screenLabel}
+                </span>
+                <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
+              </div>
+              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)]">
+                <Image
+                  src={imageUrl}
+                  alt="post screenshot"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 390px"
+                  className="object-cover"
+                  priority
+                />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.18),transparent_28%,transparent_74%,rgba(255,255,255,0.08))]" />
+                {theme && (
+                  <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-foreground shadow-lg">
+                    {theme}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          {formContent}
+        </section>
+      </div>
+    )
+  }
+
+  return formContent
 }

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { CheckCircle2, Cloud, ImageIcon, Loader2, ScanLine, Smartphone, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { ListEditor, type AppInfo } from '@/components/EditTagsForm'
+import type { ExtractedTags } from '@/lib/gemini'
 
 const stepIcons = {
   prepare: Cloud,
@@ -35,6 +37,19 @@ const copy = {
     submitLabel: '投稿する',
     successBasePath: '/posts',
     fallbackPath: '/',
+    confirmTitle: 'AI検出結果の確認・修正',
+    confirmDesc: 'AIが自動検出したアプリやウィジェットが正しいか確認・修正してください。',
+    cancelLabel: 'やり直す',
+    publishLabel: 'この内容で投稿する',
+    publishingLabel: '投稿中...',
+    appsLabel: 'アプリ',
+    appsPlaceholder: 'アプリ名で検索して追加',
+    dockLabel: 'Dock',
+    dockPlaceholder: 'Dockアプリを検索して追加',
+    widgetsLabel: 'ウィジェット',
+    widgetsPlaceholder: 'ウィジェットの提供アプリを検索',
+    themeLabel: 'テーマ',
+    noTheme: '未指定',
   },
   en: {
     steps: [
@@ -54,6 +69,19 @@ const copy = {
     submitLabel: 'Share setup',
     successBasePath: '/en/posts',
     fallbackPath: '/en',
+    confirmTitle: 'Confirm & Edit AI Detections',
+    confirmDesc: 'Please review and edit the apps and widgets automatically detected by the AI.',
+    cancelLabel: 'Cancel',
+    publishLabel: 'Share Setup',
+    publishingLabel: 'Publishing...',
+    appsLabel: 'Apps',
+    appsPlaceholder: 'Search apps to add',
+    dockLabel: 'Dock',
+    dockPlaceholder: 'Search Dock apps to add',
+    widgetsLabel: 'Widgets',
+    widgetsPlaceholder: 'Search widget apps',
+    themeLabel: 'Theme',
+    noTheme: 'Unspecified',
   },
 } satisfies Record<Locale, {
   steps: { id: StepId; label: string }[]
@@ -69,6 +97,19 @@ const copy = {
   submitLabel: string
   successBasePath: string
   fallbackPath: string
+  confirmTitle: string
+  confirmDesc: string
+  cancelLabel: string
+  publishLabel: string
+  publishingLabel: string
+  appsLabel: string
+  appsPlaceholder: string
+  dockLabel: string
+  dockPlaceholder: string
+  widgetsLabel: string
+  widgetsPlaceholder: string
+  themeLabel: string
+  noTheme: string
 }>
 
 const enApiErrorMap: Record<string, string> = {
@@ -108,11 +149,37 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
+  // New confirmation state & editable tags states
+  const [analyzeResult, setAnalyzeResult] = useState<{
+    tempRedactedPath: string
+    imageUrl: string
+    extractedTags: ExtractedTags
+  } | null>(null)
+  const [apps, setApps] = useState<string[]>([])
+  const [dockApps, setDockApps] = useState<string[]>([])
+  const [widgets, setWidgets] = useState<string[]>([])
+  const [theme, setTheme] = useState<string>('')
+  const [appLinks, setAppLinks] = useState<Record<string, AppInfo>>({})
+  const [widgetLinks, setWidgetLinks] = useState<Record<string, AppInfo>>({})
+  const [publishing, setPublishing] = useState(false)
+
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview)
     }
   }, [preview])
+
+  useEffect(() => {
+    if (analyzeResult) {
+      const tags = analyzeResult.extractedTags
+      setApps(tags.apps ?? [])
+      setDockApps(tags.dock_apps ?? [])
+      setWidgets(tags.widgets ?? [])
+      setTheme(tags.theme ?? '')
+      setAppLinks(tags.app_links ?? {})
+      setWidgetLinks(tags.widget_links ?? {})
+    }
+  }, [analyzeResult])
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -157,9 +224,9 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
         return
       }
 
-      // 3. サーバ側でAI解析 + 圧縮
+      // 3. サーバ側でAI解析 + 圧縮 (確認用の一時ファイルを生成するエンドポイントへ)
       setActiveStep('analyze')
-      const res = await fetch(`/api/posts${localeParam}`, {
+      const res = await fetch(`/api/posts/analyze${localeParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path }),
@@ -171,14 +238,215 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
         setActiveStep(null)
         return
       }
-      const post = await res.json().catch(() => null) as CreatedPost | null
-      router.push(post?.id ? `${t.successBasePath}/${post.id}?posted=1` : t.fallbackPath)
-      router.refresh()
+      const result = await res.json().catch(() => null) as {
+        tempRedactedPath: string
+        imageUrl: string
+        extractedTags: ExtractedTags
+      } | null
+
+      if (!result || !result.tempRedactedPath || !result.imageUrl || !result.extractedTags) {
+        setError(t.postError(500))
+        setUploading(false)
+        setActiveStep(null)
+        return
+      }
+
+      setAnalyzeResult(result)
+      setUploading(false)
+      setActiveStep(null)
     } catch {
       setError(t.networkError)
       setUploading(false)
       setActiveStep(null)
     }
+  }
+
+  function onCancel() {
+    if (preview) {
+      URL.revokeObjectURL(preview)
+      setPreview(null)
+    }
+    setFile(null)
+    setAnalyzeResult(null)
+    setApps([])
+    setDockApps([])
+    setWidgets([])
+    setTheme('')
+    setAppLinks({})
+    setWidgetLinks({})
+    setError(null)
+    setUploading(false)
+    setActiveStep(null)
+    setPublishing(false)
+  }
+
+  async function onPublish() {
+    if (!analyzeResult) return
+    setPublishing(true)
+    setError(null)
+
+    try {
+      const localeParam = locale === 'en' ? '?locale=en' : ''
+      const finalTags: ExtractedTags = {
+        is_home_screen: analyzeResult.extractedTags.is_home_screen,
+        is_lock_screen: analyzeResult.extractedTags.is_lock_screen,
+        screen_type: analyzeResult.extractedTags.screen_type,
+        apps,
+        dock_apps: dockApps,
+        widgets,
+        theme: theme as 'dark' | 'light' | '',
+        app_links: appLinks,
+        widget_links: widgetLinks,
+        wallpaper_colors: analyzeResult.extractedTags.wallpaper_colors,
+      }
+
+      const res = await fetch(`/api/posts${localeParam}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tempRedactedPath: analyzeResult.tempRedactedPath,
+          extractedTags: finalTags,
+        }),
+      })
+
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setError(formatApiError(d.error, t.postError(res.status), locale))
+        setPublishing(false)
+        return
+      }
+
+      const post = await res.json().catch(() => null) as CreatedPost | null
+      router.push(post?.id ? `${t.successBasePath}/${post.id}?posted=1` : t.fallbackPath)
+      router.refresh()
+    } catch {
+      setError(t.networkError)
+      setPublishing(false)
+    }
+  }
+
+  if (analyzeResult) {
+    const isLockScreen = analyzeResult.extractedTags.screen_type === 'lock' || analyzeResult.extractedTags.is_lock_screen
+    const screenLabel = isLockScreen
+      ? (locale === 'en' ? 'Lock Screen' : 'Lock screen')
+      : (locale === 'en' ? 'Home Screen' : 'Home setup')
+
+    return (
+      <div className="grid gap-6 md:grid-cols-[minmax(270px,0.78fr)_minmax(0,1fr)] md:items-start">
+        <section className="gallery-shelf rounded-[2.25rem] p-4 sm:p-5 md:sticky md:top-20">
+          <div className="relative mx-auto max-w-[15.5rem] sm:max-w-[18rem] lg:max-w-sm">
+            <div className="relative rounded-[2.25rem] bg-[linear-gradient(180deg,rgb(var(--surface)/0.64),rgb(var(--surface)/0.24))] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_30px_68px_-40px_rgba(0,0,0,0.62)] ring-1 ring-black/5 dark:ring-white/10">
+              <div className="mb-2.5 flex items-center justify-between px-1">
+                <span className="rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white">
+                  {screenLabel}
+                </span>
+                <span className="h-1.5 w-12 rounded-full bg-black/18 dark:bg-white/18" />
+              </div>
+              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[1.8rem] bg-black shadow-[0_20px_44px_-32px_rgba(0,0,0,0.72)]">
+                <Image
+                  src={analyzeResult.imageUrl}
+                  alt="redacted preview"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 390px"
+                  className="object-cover"
+                  priority
+                />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.18),transparent_28%,transparent_74%,rgba(255,255,255,0.08))]" />
+                {theme && (
+                  <span className="gallery-caption absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-foreground shadow-lg">
+                    {theme}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <h1 className="text-xl sm:text-2xl font-black leading-tight">
+              {t.confirmTitle}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted">
+              {t.confirmDesc}
+            </p>
+          </div>
+
+          {!isLockScreen && (
+            <>
+              <ListEditor
+                label={t.appsLabel}
+                items={apps}
+                setItems={setApps}
+                placeholder={t.appsPlaceholder}
+                links={appLinks}
+                setLinks={setAppLinks}
+                locale={locale}
+              />
+              <ListEditor
+                label={t.dockLabel}
+                items={dockApps}
+                setItems={setDockApps}
+                placeholder={t.dockPlaceholder}
+                links={appLinks}
+                setLinks={setAppLinks}
+                locale={locale}
+              />
+            </>
+          )}
+
+          <ListEditor
+            label={t.widgetsLabel}
+            items={widgets}
+            setItems={setWidgets}
+            placeholder={t.widgetsPlaceholder}
+            links={widgetLinks}
+            setLinks={setWidgetLinks}
+            locale={locale}
+          />
+
+          <section className="gallery-caption rounded-[2rem] p-4 sm:p-5 space-y-3">
+            <h2 className="text-xs font-bold text-muted uppercase tracking-[0.16em]">{t.themeLabel}</h2>
+            <div className="flex flex-wrap gap-2">
+              {(['dark', 'light', ''] as const).map(themeOption => (
+                <button
+                  key={themeOption || 'none'}
+                  type="button"
+                  onClick={() => setTheme(themeOption)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                    theme === themeOption ? 'bg-accent text-white shadow-md' : 'gallery-caption text-muted hover:text-foreground'
+                  }`}
+                >
+                  {themeOption || t.noTheme}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {error && <p className="rounded-2xl bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">{error}</p>}
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={publishing}
+              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold border border-black/10 dark:border-white/10 text-foreground hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {t.cancelLabel}
+            </button>
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={publishing}
+              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-accent shadow-lg shadow-emerald-950/10 hover:bg-accent-strong hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              {publishing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              {publishing ? t.publishingLabel : t.publishLabel}
+            </button>
+          </div>
+        </section>
+      </div>
+    )
   }
 
   return (

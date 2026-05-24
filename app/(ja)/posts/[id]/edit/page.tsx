@@ -54,9 +54,10 @@ export async function EditPostContent({ params, locale }: Props & { locale: Loca
   if (!post) notFound()
 
   const tags = post.extracted_tags ?? {}
+  const screenType = tags.screen_type === 'lock' || tags.is_lock_screen ? 'lock' : 'home'
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="space-y-3">
         <BackButton fallback={postPath} variant="text" label={t.backLabel} />
         <div className="inline-flex items-center gap-2 rounded-full glass-soft px-3 py-1 text-xs font-bold tracking-[0.16em] text-accent uppercase">
@@ -74,6 +75,8 @@ export async function EditPostContent({ params, locale }: Props & { locale: Loca
       <EditTagsForm
         postId={id}
         ownerAnonId={post.anon_user_id}
+        imageUrl={post.image_url}
+        screenType={screenType}
         initialApps={tags.apps ?? []}
         initialDockApps={tags.dock_apps ?? []}
         initialWidgets={tags.widgets ?? []}

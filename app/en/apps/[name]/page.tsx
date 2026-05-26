@@ -5,6 +5,9 @@ import { BackButton } from '@/components/BackButton'
 import { PostGrid } from '@/components/PostGrid'
 import { lookupFullApp } from '@/lib/app-store'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAuthenticatedUser } from '@/lib/auth-server'
+import { UserAppToggleButton } from '@/components/UserAppToggleButton'
+import { UserAvatar } from '@/components/UserAvatar'
 
 type Props = { params: Promise<{ name: string }> }
 
@@ -16,6 +19,8 @@ type PostRow = {
   created_at: string
   anon_user_id: string | null
 }
+
+
 
 async function lookupEnglishApp(slug: string) {
   return (await lookupFullApp(slug, 'us')) ?? (await lookupFullApp(slug, 'jp'))
@@ -85,10 +90,48 @@ export default async function EnglishAppPage({ params }: Props) {
   const { name } = await params
   const decodedName = decodeURIComponent(name)
 
-  const [info, posts] = await Promise.all([
+  const [info, posts, supabase, user] = await Promise.all([
     lookupEnglishApp(decodedName),
     getPostsForApp(decodedName),
+    Promise.resolve(createAdminClient()),
+    getAuthenticatedUser(),
   ])
+
+  // 愛用者情報の取得
+  let userAppsCount = 0
+  let isUsing = false
+  let userIds: string[] = []
+
+  if (info) {
+    const trackIdStr = info.trackId.toString()
+
+    // 1. 件数カウント
+    const { count } = await supabase
+      .from('user_apps')
+      .select('*', { count: 'exact', head: true })
+      .eq('track_id', trackIdStr)
+    userAppsCount = count ?? 0
+
+    // 2. 最新10人のID取得
+    const { data: usersData } = await supabase
+      .from('user_apps')
+      .select('user_id')
+      .eq('track_id', trackIdStr)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    userIds = (usersData ?? []).map(d => d.user_id)
+
+    // 3. 自分が愛用中か確認
+    if (user) {
+      const { data: checkData } = await supabase
+        .from('user_apps')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('track_id', trackIdStr)
+        .maybeSingle()
+      isUsing = !!checkData
+    }
+  }
 
   const appName = info?.trackName ?? decodedName
   const setupCount = posts.length
@@ -207,15 +250,38 @@ export default async function EnglishAppPage({ params }: Props) {
                 </p>
               )}
 
-              <a
-                href={info.trackViewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-950/10 transition-all hover:bg-accent-strong hover:scale-[1.01] active:scale-95"
-              >
-                <ExternalLink size={14} />
-                Open in App Store
-              </a>
+              {userAppsCount > 0 && (
+                <div className="flex items-center gap-3 rounded-2xl glass-soft p-3 max-w-sm">
+                  <div className="flex -space-x-2 overflow-hidden">
+                    {userIds.map(uid => (
+                      <UserAvatar key={uid} userId={uid} size={28} className="border-2 border-[#090d16]" />
+                    ))}
+                  </div>
+                  <div className="text-xs font-semibold text-muted">
+                    {userAppsCount} {userAppsCount === 1 ? 'person is' : 'people are'} using this app
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 items-center">
+                <a
+                  href={info.trackViewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-950/10 transition-all hover:bg-accent-strong hover:scale-[1.01] active:scale-95"
+                >
+                  <ExternalLink size={14} />
+                  Open in App Store
+                </a>
+                <UserAppToggleButton
+                  trackId={info.trackId.toString()}
+                  appName={info.trackName}
+                  artworkUrl={info.artworkUrl100}
+                  initialIsUsing={isUsing}
+                  userId={user?.id ?? null}
+                  locale="en"
+                />
+              </div>
             </div>
           </div>
 

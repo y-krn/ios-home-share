@@ -44,8 +44,7 @@ yarn-error.log*
 next-env.d.ts
 supabase/config.toml
 supabase/.branches/_current_branch
-supabase/.temp/cli-latest
+supabase/.temp
 
 # playwright auth session
 /playwright/.auth/
-

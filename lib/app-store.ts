@@ -8,6 +8,7 @@ export type AppStoreInfo = {
 }
 
 export type FullAppStoreInfo = {
+  trackId: number
   trackName: string
   artistName: string
   trackViewUrl: string

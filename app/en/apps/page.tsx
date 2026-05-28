@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { LayoutGrid, Search, Sparkles, Trophy } from 'lucide-react'
-import { extractTrackId, lookupAppByTrackId } from '@/lib/app-store'
-import { getPopularApps } from '@/lib/popular-apps'
+import { extractTrackId } from '@/lib/app-store'
+import { getCachedPopularAppsEn } from '@/lib/popular-apps'
 
 export const revalidate = 60
 
@@ -32,36 +32,16 @@ export const metadata: Metadata = {
   },
 }
 
-type EnglishAppInfo = {
-  icon: string
-  trackName: string
-  url: string
-}
-
-async function lookupEnglishApp(trackId: string): Promise<EnglishAppInfo | null> {
-  const item = (await lookupAppByTrackId(trackId, 'us')) ?? (await lookupAppByTrackId(trackId, 'jp'))
-  if (!item) return null
-
-  return {
-    icon: item.artworkUrl100,
-    trackName: item.trackName,
-    url: item.trackViewUrl,
-  }
-}
-
 export default async function EnglishAppsPage() {
-  const apps = await getPopularApps(60)
-  const displayApps = await Promise.all(apps.map(async app => {
+  const apps = await getCachedPopularAppsEn(60)
+  const displayApps = apps.map(app => {
     const trackId = app.info ? extractTrackId(app.info.url) : null
-    const englishInfo = trackId ? await lookupEnglishApp(trackId) : null
-
     return {
       ...app,
-      info: englishInfo ?? app.info,
       slug: trackId ?? app.name,
     }
-  }))
-  const totalSetups = apps.reduce((sum, app) => sum + app.use_count, 0)
+  })
+  const totalSetups = displayApps.reduce((sum, app) => sum + app.use_count, 0)
   const featuredApps = displayApps.slice(0, 3)
   const itemListJsonLd = {
     '@context': 'https://schema.org',

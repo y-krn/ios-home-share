@@ -61,19 +61,31 @@ async function lookupEnglishApp(trackId: string) {
   }
 }
 
+// Cache the resolved English popular app information to prevent redundant API queries
+const getCachedPopularAppsEn = unstable_cache(
+  async (limit: number) => {
+    const rawPopularApps = await getPopularApps(limit)
+    return Promise.all(
+      rawPopularApps.map(async (app) => {
+        const trackId = app.info ? extractTrackId(app.info.url) : null
+        const englishInfo = trackId ? await lookupEnglishApp(trackId) : null
+        return {
+          ...app,
+          info: englishInfo ?? app.info,
+        }
+      })
+    )
+  },
+  ['english-popular-apps'],
+  { revalidate: 60, tags: ['popular_apps'] }
+)
+
 export default async function EnglishHomePage() {
-  const posts = await getCachedPosts()
-  const rawPopularApps = await getPopularApps(15)
-  const popularApps = await Promise.all(
-    rawPopularApps.map(async (app) => {
-      const trackId = app.info ? extractTrackId(app.info.url) : null
-      const englishInfo = trackId ? await lookupEnglishApp(trackId) : null
-      return {
-        ...app,
-        info: englishInfo ?? app.info,
-      }
-    })
-  )
+  // Fetch posts and resolved popular apps in parallel
+  const [posts, popularApps] = await Promise.all([
+    getCachedPosts(),
+    getCachedPopularAppsEn(15),
+  ])
 
   return (
     <div className="space-y-8">

@@ -38,11 +38,14 @@ const getCachedPosts = unstable_cache(
 
 export default async function Home({ searchParams }: Props) {
   const { tag, theme, type } = await searchParams
-  const posts = await getCachedPosts(tag, theme, type)
-  const popularApps = await getPopularApps(15)
 
-  // タグ正式名解決 (iTunes API)
-  const tagInfo = tag ? await lookupApp(tag) : null
+  // 直列フェッチを並列化して初期ロード速度を向上
+  const [posts, popularApps, tagInfo] = await Promise.all([
+    getCachedPosts(tag, theme, type),
+    getPopularApps(15),
+    tag ? lookupApp(tag) : Promise.resolve(null),
+  ])
+
   const displayTag = tagInfo?.trackName ?? tag
 
   return (

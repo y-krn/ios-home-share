@@ -6,6 +6,7 @@ import { PostGrid } from '@/components/PostGrid'
 import { getAuthenticatedUser } from '@/lib/auth-server'
 import { UserAppToggleButton } from '@/components/UserAppToggleButton'
 import { UserAvatar } from '@/components/UserAvatar'
+import { unstable_cache } from 'next/cache'
 
 type Props = { params: Promise<{ name: string }> }
 
@@ -42,12 +43,27 @@ async function fetchFullInfo(slug: string, country = 'jp'): Promise<ITunesItem |
   return data.results?.[0] ?? null
 }
 
+const getCachedFullInfo = unstable_cache(
+  async (slug: string, country = 'jp') => fetchFullInfo(slug, country),
+  ['app-full-info'],
+  { revalidate: 86400 }
+)
+
+type PostRow = {
+  id: string
+  image_url: string
+  like_count: number
+  extracted_tags: Record<string, unknown>
+  created_at: string
+  anon_user_id: string | null
+}
+
 export default async function AppPage({ params }: Props) {
   const { name } = await params
   const decodedName = decodeURIComponent(name)
 
   const [info, supabase, user] = await Promise.all([
-    fetchFullInfo(decodedName),
+    getCachedFullInfo(decodedName),
     Promise.resolve(createAdminClient()),
     getAuthenticatedUser(),
   ])
@@ -56,53 +72,51 @@ export default async function AppPage({ params }: Props) {
   let userAppsCount = 0
   let isUsing = false
   let userIds: string[] = []
+  let posts: PostRow[] | null = null
 
   if (info) {
     const trackIdStr = info.trackId.toString()
     
-    // 1. 件数カウント
-    const { count } = await supabase
-      .from('user_apps')
-      .select('*', { count: 'exact', head: true })
-      .eq('track_id', trackIdStr)
-    userAppsCount = count ?? 0
-
-    // 2. 最新10人のID取得
-    const { data: usersData } = await supabase
-      .from('user_apps')
-      .select('user_id')
-      .eq('track_id', trackIdStr)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    userIds = (usersData ?? []).map(d => d.user_id)
-
-    // 3. 自分が愛用中か確認
-    if (user) {
-      const { data: checkData } = await supabase
+    // 全てのDBアクセスとセットアップ投稿の取得を一括並列実行してウォーターフォールを解消
+    const [countRes, usersRes, checkRes, postsRes] = await Promise.all([
+      // 1. 件数カウント
+      supabase
         .from('user_apps')
-        .select('id')
-        .eq('user_id', user.id)
+        .select('*', { count: 'exact', head: true })
+        .eq('track_id', trackIdStr),
+      // 2. 最新10人のID取得
+      supabase
+        .from('user_apps')
+        .select('user_id')
         .eq('track_id', trackIdStr)
-        .maybeSingle()
-      isUsing = !!checkData
-    }
-  }
+        .order('created_at', { ascending: false })
+        .limit(10),
+      // 3. 自分が愛用中か確認
+      user
+        ? supabase
+            .from('user_apps')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('track_id', trackIdStr)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      // 4. 投稿一覧の取得
+      /^\d+$/.test(decodedName)
+        ? supabase.rpc('posts_by_track_id', { track_id: decodedName })
+        : supabase
+            .from('posts')
+            .select('*')
+            .or(`extracted_tags->apps.cs.${JSON.stringify([decodedName])},extracted_tags->dock_apps.cs.${JSON.stringify([decodedName])}`)
+            .order('created_at', { ascending: false })
+            .limit(20)
+    ])
 
-  // 数値スラッグ = trackId → app_links/widget_links のURL値で検索 (RPC)
-  // 文字列スラッグ = 名前検索フォールバック
-  type PostRow = {
-    id: string
-    image_url: string
-    like_count: number
-    extracted_tags: Record<string, unknown>
-    created_at: string
-    anon_user_id: string | null
-  }
-  let posts: PostRow[] | null = null
-  if (/^\d+$/.test(decodedName)) {
-    const { data } = await supabase.rpc('posts_by_track_id', { track_id: decodedName })
-    posts = (data as PostRow[]) ?? null
+    userAppsCount = countRes.count ?? 0
+    userIds = (usersRes.data ?? []).map(d => d.user_id)
+    isUsing = !!checkRes.data
+    posts = (postsRes.data as PostRow[]) ?? null
   } else {
+    // アプリ情報が取れなくても、投稿一覧のフォールバック取得
     const { data } = await supabase
       .from('posts')
       .select('*')

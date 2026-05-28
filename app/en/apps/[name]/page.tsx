@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAuthenticatedUser } from '@/lib/auth-server'
 import { UserAppToggleButton } from '@/components/UserAppToggleButton'
 import { UserAvatar } from '@/components/UserAvatar'
+import { unstable_cache } from 'next/cache'
 
 type Props = { params: Promise<{ name: string }> }
 
@@ -25,6 +26,12 @@ type PostRow = {
 async function lookupEnglishApp(slug: string) {
   return (await lookupFullApp(slug, 'us')) ?? (await lookupFullApp(slug, 'jp'))
 }
+
+const getCachedEnglishApp = unstable_cache(
+  async (slug: string) => lookupEnglishApp(slug),
+  ['english-app-lookup'],
+  { revalidate: 86400 }
+)
 
 async function getPostsForApp(slug: string, limit = 20): Promise<PostRow[]> {
   const supabase = createAdminClient()
@@ -48,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { name } = await params
   const decodedName = decodeURIComponent(name)
   const [info, posts] = await Promise.all([
-    lookupEnglishApp(decodedName),
+    getCachedEnglishApp(decodedName),
     getPostsForApp(decodedName, 1),
   ])
   const appName = info?.trackName ?? decodedName
@@ -90,9 +97,8 @@ export default async function EnglishAppPage({ params }: Props) {
   const { name } = await params
   const decodedName = decodeURIComponent(name)
 
-  const [info, posts, supabase, user] = await Promise.all([
-    lookupEnglishApp(decodedName),
-    getPostsForApp(decodedName),
+  const [info, supabase, user] = await Promise.all([
+    getCachedEnglishApp(decodedName),
     Promise.resolve(createAdminClient()),
     getAuthenticatedUser(),
   ])
@@ -101,36 +107,45 @@ export default async function EnglishAppPage({ params }: Props) {
   let userAppsCount = 0
   let isUsing = false
   let userIds: string[] = []
+  let posts: PostRow[] = []
 
   if (info) {
     const trackIdStr = info.trackId.toString()
 
-    // 1. 件数カウント
-    const { count } = await supabase
-      .from('user_apps')
-      .select('*', { count: 'exact', head: true })
-      .eq('track_id', trackIdStr)
-    userAppsCount = count ?? 0
-
-    // 2. 最新10人のID取得
-    const { data: usersData } = await supabase
-      .from('user_apps')
-      .select('user_id')
-      .eq('track_id', trackIdStr)
-      .order('created_at', { ascending: false })
-      .limit(10)
-    userIds = (usersData ?? []).map(d => d.user_id)
-
-    // 3. 自分が愛用中か確認
-    if (user) {
-      const { data: checkData } = await supabase
+    // データベースへの件数カウント、アバターリスト取得、自分の愛用チェック、投稿リスト取得を一括並列実行
+    const [countRes, usersRes, checkRes, postsRes] = await Promise.all([
+      // 1. 件数カウント
+      supabase
         .from('user_apps')
-        .select('id')
-        .eq('user_id', user.id)
+        .select('*', { count: 'exact', head: true })
+        .eq('track_id', trackIdStr),
+      // 2. 最新10人のID取得
+      supabase
+        .from('user_apps')
+        .select('user_id')
         .eq('track_id', trackIdStr)
-        .maybeSingle()
-      isUsing = !!checkData
-    }
+        .order('created_at', { ascending: false })
+        .limit(10),
+      // 3. 自分が愛用中か確認
+      user
+        ? supabase
+            .from('user_apps')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('track_id', trackIdStr)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      // 4. 投稿一覧の取得
+      getPostsForApp(decodedName)
+    ])
+
+    userAppsCount = countRes.count ?? 0
+    userIds = (usersRes.data ?? []).map(d => d.user_id)
+    isUsing = !!checkRes.data
+    posts = postsRes
+  } else {
+    // アプリ情報が取れなくても、投稿一覧のフォールバック取得
+    posts = await getPostsForApp(decodedName)
   }
 
   const appName = info?.trackName ?? decodedName

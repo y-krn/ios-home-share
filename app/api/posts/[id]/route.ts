@@ -5,6 +5,28 @@ import { lookupApps } from '@/lib/app-store'
 
 const BUCKET = 'screenshots'
 
+function extractTrackIds(appLinks?: Record<string, unknown>, widgetLinks?: Record<string, unknown>): string[] {
+  const ids = new Set<string>()
+  const extract = (links?: Record<string, unknown>) => {
+    if (!links) return
+    for (const key in links) {
+      const obj = links[key]
+      if (obj && typeof obj === 'object' && 'url' in obj) {
+        const url = (obj as { url?: unknown }).url
+        if (typeof url === 'string') {
+          const match = url.match(/\/id(\d+)(?:\?|$|\/)/)
+          if (match) {
+            ids.add(match[1])
+          }
+        }
+      }
+    }
+  }
+  extract(appLinks)
+  extract(widgetLinks)
+  return Array.from(ids)
+}
+
 async function authenticatedUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -73,6 +95,7 @@ export async function PATCH(
       ...(theme !== undefined ? { theme } : {}),
       app_links: mergedAppLinks,
       widget_links: mergedWidgetLinks,
+      track_ids: extractTrackIds(mergedAppLinks, mergedWidgetLinks),
     }
 
     const { error: updateError } = await admin

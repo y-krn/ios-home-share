@@ -22,6 +22,7 @@ export type ExtractedTags = {
   redaction_boxes?: BoundingBox[]
   app_links?: Record<string, { url: string; icon: string; trackName: string }>
   widget_links?: Record<string, { url: string; icon: string; trackName: string }>
+  track_ids?: string[]
 }
 
 const PROMPT = `Analyze this image and return JSON only, no explanation.

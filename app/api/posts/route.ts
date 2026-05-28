@@ -70,6 +70,28 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(data)
 }
 
+function extractTrackIds(appLinks?: Record<string, unknown>, widgetLinks?: Record<string, unknown>): string[] {
+  const ids = new Set<string>()
+  const extract = (links?: Record<string, unknown>) => {
+    if (!links) return
+    for (const key in links) {
+      const obj = links[key]
+      if (obj && typeof obj === 'object' && 'url' in obj) {
+        const url = (obj as { url?: unknown }).url
+        if (typeof url === 'string') {
+          const match = url.match(/\/id(\d+)(?:\?|$|\/)/)
+          if (match) {
+            ids.add(match[1])
+          }
+        }
+      }
+    }
+  }
+  extract(appLinks)
+  extract(widgetLinks)
+  return Array.from(ids)
+}
+
 export async function POST(req: NextRequest) {
   const locale = getLocale(req)
 
@@ -91,6 +113,9 @@ export async function POST(req: NextRequest) {
     if (!tempOriginalPath || !tempOriginalPath.startsWith('temp/original-') || !extractedTags) {
       return NextResponse.json({ error: message(locale, 'アップロード情報が不正です', 'The upload information is invalid.') }, { status: 400 })
     }
+
+    // Populate track_ids based on app_links and widget_links URL parsing
+    extractedTags.track_ids = extractTrackIds(extractedTags.app_links, extractedTags.widget_links)
 
     const admin = createAdminClient()
 

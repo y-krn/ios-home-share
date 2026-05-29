@@ -10,6 +10,7 @@ import { TagBadge } from '@/components/TagBadge'
 import { AppLink } from '@/components/AppLink'
 import { ShareButton } from '@/components/ShareButton'
 import { RecreateChecklist } from '@/components/RecreateChecklist'
+import { getAuthenticatedUser } from '@/lib/auth-server'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -94,6 +95,19 @@ export default async function PostPage({ params, searchParams }: Props) {
 export async function PostDetail({ id, posted, locale = 'ja' }: { id: string; posted?: string; locale?: Locale }) {
   const post = await getPost(id)
   if (!post) notFound()
+
+  const user = await getAuthenticatedUser()
+  let initialLiked = false
+  if (user) {
+    const supabase = createAdminClient()
+    const { data: likeData } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('post_id', id)
+      .eq('anon_user_id', user.id)
+      .maybeSingle()
+    initialLiked = !!likeData
+  }
 
   const isEnglish = locale === 'en'
   const tags = post.extracted_tags ?? {}
@@ -195,7 +209,7 @@ export async function PostDetail({ id, posted, locale = 'ja' }: { id: string; po
                   <CalendarDays size={14} />
                   {createdAt}
                 </span>
-                <LikeButton postId={post.id} initialCount={post.like_count} locale={locale} />
+                <LikeButton postId={post.id} initialCount={post.like_count} initialLiked={initialLiked} locale={locale} />
                 <ShareButton title={shareTitle} text={shareText} locale={locale} />
               </div>
             </div>

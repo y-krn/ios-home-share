@@ -34,7 +34,8 @@ export async function DELETE(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) return NextResponse.json({ liked: false })
 
   const { searchParams } = new URL(req.url)

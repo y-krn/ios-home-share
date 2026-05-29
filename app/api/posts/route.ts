@@ -136,7 +136,11 @@ export async function POST(req: NextRequest) {
     // finalized 画像をアップロード
     const { error: uploadError } = await admin.storage
       .from(BUCKET)
-      .upload(path, finalBuffer, { contentType: 'image/webp', upsert: false })
+      .upload(path, finalBuffer, { 
+        contentType: 'image/webp', 
+        upsert: false,
+        cacheControl: '31536000'
+      })
 
     if (uploadError) {
       console.error('Upload redacted file failed:', uploadError)

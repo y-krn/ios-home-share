@@ -14,9 +14,11 @@ export function AuthHeader() {
   const isEnglish = pathname?.startsWith('/en')
   const appsHref = isEnglish ? '/en/apps' : '/apps'
   const uploadHref = isEnglish ? '/en/upload' : '/upload'
+  const loginHref = isEnglish ? '/en/login' : '/login'
   const myPageHref = isEnglish ? '/en/me' : '/me'
   const appsLabel = isEnglish ? 'Popular apps' : '人気のアプリ'
   const uploadLabel = isEnglish ? 'Share' : '投稿'
+  const loginLabel = isEnglish ? 'Log in' : 'ログイン'
   const myPageLabel = isEnglish ? 'My page' : 'マイページ'
 
   useEffect(() => {
@@ -51,17 +53,15 @@ export function AuthHeader() {
         <Sparkles size={16} />
       </Link>
       <ThemeToggle />
-      {isAuthed && (
-        <Link
-          href={myPageHref}
-          prefetch={false}
-          className="gallery-caption flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all hover:-translate-y-0.5 hover:text-accent active:scale-90"
-          aria-label={myPageLabel}
-          title={myPageLabel}
-        >
-          <User size={16} />
-        </Link>
-      )}
+      <Link
+        href={isAuthed ? myPageHref : loginHref}
+        prefetch={false}
+        className="gallery-caption flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all hover:-translate-y-0.5 hover:text-accent active:scale-90"
+        aria-label={isAuthed ? myPageLabel : loginLabel}
+        title={isAuthed ? myPageLabel : loginLabel}
+      >
+        <User size={16} />
+      </Link>
       <Link
         href={uploadHref}
         prefetch={false}

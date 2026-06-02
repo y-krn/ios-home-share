@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ImagePlus, SearchX, Check, RotateCcw } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { ensureAnonymousUser } from '@/lib/auth'
 import { PostCard } from './PostCard'
 import type { PopularApp } from '@/lib/popular-apps'
@@ -153,6 +154,7 @@ export function PostGrid({
 
   if (posts.length === 0) {
     const isFiltered = !!(tag || trackId || theme || selectedApps.length > 0)
+    const uploadHref = locale === 'en' ? '/en/upload' : '/upload'
     return (
       <>
         {showFilter && (
@@ -223,6 +225,15 @@ export function PostGrid({
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
             {isFiltered ? filteredEmptyDescription : emptyDescription}
           </p>
+          {isFiltered && (
+            <Link
+              href={uploadHref}
+              prefetch={false}
+              className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-accent px-4 text-sm font-bold text-white shadow-lg shadow-emerald-950/10 transition-all hover:bg-accent-strong hover:scale-[1.01] active:scale-95"
+            >
+              {locale === 'en' ? 'Share your setup' : '自分のセットアップを投稿'}
+            </Link>
+          )}
         </div>
       </>
     )

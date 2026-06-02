@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { Suspense, useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Check, CheckCircle2, Cloud, Edit, ImageIcon, Loader2, ScanLine, Smartphone, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { ensureAnonymousUser } from '@/lib/auth'
 import { ListEditor, type AppInfo } from '@/components/EditTagsForm'
+import { LoginForm } from '@/components/LoginForm'
 import type { ExtractedTags, BoundingBox } from '@/lib/gemini'
 
 const stepIcons = {
@@ -17,6 +19,22 @@ const stepIcons = {
 type StepId = keyof typeof stepIcons
 type CreatedPost = { id?: string }
 type Locale = 'ja' | 'en'
+type AnalyzeResult = {
+  tempOriginalPath: string
+  imageUrl: string
+  extractedTags: ExtractedTags
+}
+type UploadDraft = AnalyzeResult & {
+  savedAt: number
+  apps: string[]
+  dockApps: string[]
+  widgets: string[]
+  theme: string
+  appLinks: Record<string, AppInfo>
+  widgetLinks: Record<string, AppInfo>
+  redactionBoxes: BoundingBox[]
+}
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000
 
 const copy = {
   ja: {
@@ -42,6 +60,7 @@ const copy = {
     cancelLabel: 'やり直す',
     publishLabel: 'この内容で投稿する',
     publishingLabel: '投稿中...',
+    previewLoginRequired: '解析プレビューはログイン不要。公開投稿には、あとで削除・管理できるようメール認証が必要です。',
     appsLabel: 'アプリ',
     appsPlaceholder: 'アプリ名で検索して追加',
     dockLabel: 'Dock',
@@ -74,6 +93,7 @@ const copy = {
     cancelLabel: 'Cancel',
     publishLabel: 'Share Setup',
     publishingLabel: 'Publishing...',
+    previewLoginRequired: 'Preview analysis does not require login. Email login is required to publish, so you can manage or delete your setup later.',
     appsLabel: 'Apps',
     appsPlaceholder: 'Search apps to add',
     dockLabel: 'Dock',
@@ -102,6 +122,7 @@ const copy = {
   cancelLabel: string
   publishLabel: string
   publishingLabel: string
+  previewLoginRequired: string
   appsLabel: string
   appsPlaceholder: string
   dockLabel: string
@@ -126,6 +147,39 @@ const enApiErrorMap: Record<string, string> = {
   'アップロードに失敗しました': 'Upload failed. Please try again.',
 }
 
+const draftKey = (locale: Locale) => `isetup-upload-draft-${locale}`
+const legacyDraftKey = draftKey
+
+function readDraft(locale: Locale): UploadDraft | null {
+  const key = draftKey(locale)
+  const raw = localStorage.getItem(key) ?? sessionStorage.getItem(legacyDraftKey(locale))
+  if (!raw) return null
+
+  try {
+    const draft = JSON.parse(raw) as UploadDraft
+    if (!draft.tempOriginalPath || !draft.imageUrl || !draft.extractedTags) return null
+    if (!draft.savedAt || Date.now() - draft.savedAt > DRAFT_TTL_MS) {
+      localStorage.removeItem(key)
+      sessionStorage.removeItem(legacyDraftKey(locale))
+      return null
+    }
+    return draft
+  } catch {
+    localStorage.removeItem(key)
+    sessionStorage.removeItem(legacyDraftKey(locale))
+    return null
+  }
+}
+
+function writeDraft(locale: Locale, draft: UploadDraft) {
+  localStorage.setItem(draftKey(locale), JSON.stringify(draft))
+}
+
+function removeDraft(locale: Locale) {
+  localStorage.removeItem(draftKey(locale))
+  sessionStorage.removeItem(legacyDraftKey(locale))
+}
+
 function formatApiError(error: unknown, fallback: string, locale: Locale) {
   if (typeof error !== 'string' || !error.trim()) return fallback
   if (locale === 'ja') return error
@@ -139,7 +193,7 @@ function formatApiError(error: unknown, fallback: string, locale: Locale) {
   return error
 }
 
-export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
+export function UploadForm({ locale = 'ja', isAuthenticated = false }: { locale?: Locale; isAuthenticated?: boolean } = {}) {
   const t = copy[locale]
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -150,11 +204,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
   const router = useRouter()
 
   // New confirmation state & editable tags states
-  const [analyzeResult, setAnalyzeResult] = useState<{
-    tempOriginalPath: string
-    imageUrl: string
-    extractedTags: ExtractedTags
-  } | null>(null)
+  const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResult | null>(null)
   const [apps, setApps] = useState<string[]>([])
   const [dockApps, setDockApps] = useState<string[]>([])
   const [widgets, setWidgets] = useState<string[]>([])
@@ -175,6 +225,8 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
     initialBox: BoundingBox
   } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const checkedDraftRef = useRef(false)
+  const restoredDraftRef = useRef(false)
 
   useEffect(() => {
     return () => {
@@ -183,7 +235,35 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
   }, [preview])
 
   useEffect(() => {
+    if (checkedDraftRef.current) return
+    checkedDraftRef.current = true
+
+    const draft = readDraft(locale)
+    if (!draft) return
+
+    restoredDraftRef.current = true
+    setAnalyzeResult({
+      tempOriginalPath: draft.tempOriginalPath,
+      imageUrl: draft.imageUrl,
+      extractedTags: draft.extractedTags,
+    })
+    setApps(draft.apps ?? [])
+    setDockApps(draft.dockApps ?? [])
+    setWidgets(draft.widgets ?? [])
+    setTheme(draft.theme ?? '')
+    setAppLinks(draft.appLinks ?? {})
+    setWidgetLinks(draft.widgetLinks ?? {})
+    setRedactionBoxes(draft.redactionBoxes ?? [])
+    setActiveBoxIndex(null)
+    setIsEditingRedactions(false)
+  }, [locale])
+
+  useEffect(() => {
     if (analyzeResult) {
+      if (restoredDraftRef.current) {
+        restoredDraftRef.current = false
+        return
+      }
       const tags = analyzeResult.extractedTags
       setApps(tags.apps ?? [])
       setDockApps(tags.dock_apps ?? [])
@@ -196,6 +276,38 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
       setIsEditingRedactions(false)
     }
   }, [analyzeResult])
+
+  useEffect(() => {
+    if (!analyzeResult) return
+
+    const draft: UploadDraft = {
+      ...analyzeResult,
+      savedAt: Date.now(),
+      apps,
+      dockApps,
+      widgets,
+      theme,
+      appLinks,
+      widgetLinks,
+      redactionBoxes,
+      extractedTags: {
+        ...analyzeResult.extractedTags,
+        apps,
+        dock_apps: dockApps,
+        widgets,
+        theme: theme as 'dark' | 'light' | '',
+        app_links: appLinks,
+        widget_links: widgetLinks,
+        redaction_boxes: redactionBoxes,
+      },
+    }
+
+    writeDraft(locale, draft)
+  }, [analyzeResult, apps, dockApps, widgets, theme, appLinks, widgetLinks, redactionBoxes, locale])
+
+  function clearDraft() {
+    removeDraft(locale)
+  }
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>, index: number, action: 'move' | 'resize') {
     if (!isEditingRedactions) return
@@ -329,6 +441,8 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
     setError(null)
 
     try {
+      await ensureAnonymousUser()
+
       // 1. signed upload URL 取得
       setActiveStep('prepare')
       const localeParam = locale === 'en' ? '?locale=en' : ''
@@ -383,6 +497,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
       }
 
       setAnalyzeResult(result)
+      removeDraft(locale)
       setUploading(false)
       setActiveStep(null)
     } catch {
@@ -412,6 +527,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
     setUploading(false)
     setActiveStep(null)
     setPublishing(false)
+    clearDraft()
   }
 
   async function onPublish() {
@@ -452,6 +568,7 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
       }
 
       const post = await res.json().catch(() => null) as CreatedPost | null
+      clearDraft()
       router.push(post?.id ? `${t.successBasePath}/${post.id}?posted=1` : t.fallbackPath)
       router.refresh()
     } catch {
@@ -709,25 +826,43 @@ export function UploadForm({ locale = 'ja' }: { locale?: Locale } = {}) {
 
           {error && <p className="rounded-2xl bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">{error}</p>}
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={publishing}
-              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold gallery-caption text-muted hover:text-foreground active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {t.cancelLabel}
-            </button>
-            <button
-              type="button"
-              onClick={onPublish}
-              disabled={publishing}
-              className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-accent shadow-lg shadow-emerald-950/10 hover:bg-accent-strong hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              {publishing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              {publishing ? t.publishingLabel : t.publishLabel}
-            </button>
-          </div>
+          {isAuthenticated ? (
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={publishing}
+                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold gallery-caption text-muted hover:text-foreground active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {t.cancelLabel}
+              </button>
+              <button
+                type="button"
+                onClick={onPublish}
+                disabled={publishing}
+                className="flex-1 flex items-center justify-center gap-2 h-12 rounded-full text-sm font-semibold text-white bg-accent shadow-lg shadow-emerald-950/10 hover:bg-accent-strong hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {publishing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                {publishing ? t.publishingLabel : t.publishLabel}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="rounded-2xl bg-accent/10 px-4 py-3 text-xs font-semibold leading-relaxed text-accent">
+                {t.previewLoginRequired}
+              </p>
+              <Suspense>
+                <LoginForm nextOverride={locale === 'en' ? '/en/upload' : '/upload'} locale={locale} />
+              </Suspense>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold gallery-caption text-muted transition-all hover:text-foreground active:scale-95"
+              >
+                {t.cancelLabel}
+              </button>
+            </div>
+          )}
         </section>
       </div>
     )

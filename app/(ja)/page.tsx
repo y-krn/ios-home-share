@@ -60,7 +60,18 @@ export default async function Home({ searchParams }: Props) {
           <Link href="/" className="text-muted hover:text-accent text-xs underline">クリア</Link>
         </div>
       )}
-      <PostGrid initialPosts={posts} tag={tag} theme={theme} type={type} popularApps={popularApps} />
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">
+            Latest setups
+          </p>
+          <h2 className="text-2xl font-black">投稿を開いて解析結果を見る</h2>
+          <p className="max-w-xl text-sm leading-relaxed text-muted">
+            スクショをタップすると、使っているアプリ・ウィジェット・壁紙カラー・Dockまで確認できます。
+          </p>
+        </div>
+        <PostGrid initialPosts={posts} tag={tag} theme={theme} type={type} popularApps={popularApps} />
+      </section>
     </div>
   )
 }

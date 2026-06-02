@@ -15,11 +15,10 @@ function message(locale: Locale, ja: string, en: string) {
 
 export async function POST(req: NextRequest) {
   const locale = getLocale(req)
-  // 認証 (匿名拒否)
+  // 解析プレビュー用。メール未認証の匿名セッションも許可。
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: message(locale, '認証が必要です', 'Login is required.') }, { status: 401 })
-  if (user.is_anonymous) return NextResponse.json({ error: message(locale, '投稿にはメール認証が必要です', 'Email login is required to post.') }, { status: 403 })
 
   // サーバ側で path 生成 (path injection 防止)
   const path = `temp/${Date.now()}-${Math.random().toString(36).slice(2)}.bin`

@@ -41,8 +41,8 @@ export default async function EnglishUploadPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle size={17} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
-              <span className="font-semibold">Personal info is automatically masked by AI. </span>
-              <span className="text-muted">Notification badges and private widgets are auto-detected, but please double-check the preview before publishing.</span>
+              <span className="font-semibold">Review and edit privacy blurs before publishing. </span>
+              <span className="text-muted">Check detected notifications, events, and private text in the preview, then add or adjust blurs as needed.</span>
             </p>
           </div>
         </div>

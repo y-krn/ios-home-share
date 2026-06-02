@@ -8,7 +8,7 @@ export function Hero() {
         みんなの<br />iPhone画面、<br />覗き見。
       </h1>
       <p className="text-sm text-muted leading-relaxed max-w-xs">
-        AIが個人情報（通知や予定）を自動でぼかし保護＆解析。自分好みに手動編集もできるホーム画面共有。
+        アプリやウィジェットを解析。通知や予定のぼかしも投稿前に確認・編集できるホーム画面共有。
       </p>
     </section>
   )

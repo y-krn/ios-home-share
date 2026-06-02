@@ -110,7 +110,8 @@ export async function POST(req: NextRequest) {
     const tempOriginalPath = body?.tempOriginalPath
     const extractedTags = body?.extractedTags
 
-    if (!tempOriginalPath || !tempOriginalPath.startsWith('temp/original-') || !extractedTags) {
+    const userTempOriginalPrefix = `temp/${user.id}/original-`
+    if (!tempOriginalPath || !tempOriginalPath.startsWith(userTempOriginalPrefix) || !extractedTags) {
       return NextResponse.json({ error: message(locale, 'アップロード情報が不正です', 'The upload information is invalid.') }, { status: 400 })
     }
 
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
     const admin = createAdminClient()
 
     // 確定された保存先パスの生成
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
+    const path = `posts/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
 
     // Storage から原本ダウンロード
     const { data: blob, error: dlError } = await admin.storage.from(BUCKET).download(tempOriginalPath)

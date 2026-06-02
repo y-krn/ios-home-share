@@ -33,8 +33,8 @@ export default async function UploadPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle size={17} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed">
-              <span className="font-semibold">個人情報はAIが自動でぼかし保護します。</span>
-              <span className="text-muted">通知・カレンダー等の映り込みは自動検出されますが、投稿前にプレビューで状態をご確認ください。</span>
+              <span className="font-semibold">投稿前にプライバシーぼかしを確認・編集できます。</span>
+              <span className="text-muted">通知・予定などの検出結果はプレビューで確認し、必要に応じて手動で追加・修正してください。</span>
             </p>
           </div>
         </div>

@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: message(locale, '認証が必要です', 'Login is required.') }, { status: 401 })
 
-  // サーバ側で path 生成 (path injection 防止)
-  const path = `temp/${Date.now()}-${Math.random().toString(36).slice(2)}.bin`
+  // サーバ側で所有者フォルダつき path 生成 (path injection 防止)
+  const path = `temp/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.bin`
 
   const admin = createAdminClient()
   const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path)

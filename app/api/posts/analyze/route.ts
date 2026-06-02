@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => null) as { path?: string } | null
     const tempPath = body?.path
-    if (!tempPath || !tempPath.startsWith('temp/')) {
+    const userTempPrefix = `temp/${user.id}/`
+    if (!tempPath || !tempPath.startsWith(userTempPrefix)) {
       return NextResponse.json({ error: message(locale, 'アップロード情報が不正です', 'The upload information is invalid.') }, { status: 400 })
     }
 
@@ -131,8 +132,8 @@ export async function POST(req: NextRequest) {
     if (appLinks) extractedTags.app_links = appLinks
     if (widgetLinks) extractedTags.widget_links = widgetLinks
 
-    // 保存先をtemp/下のoriginalにする
-    const tempOriginalPath = `temp/original-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
+    // 保存先をユーザー所有のtemp/下のoriginalにする
+    const tempOriginalPath = `temp/${user.id}/original-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`
     const { error: uploadError } = await admin.storage
       .from(BUCKET)
       .upload(tempOriginalPath, compressedBuffer, { contentType: 'image/webp', upsert: false })
